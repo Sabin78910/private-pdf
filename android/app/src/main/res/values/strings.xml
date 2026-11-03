@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Private PDF</string>
+    <string name="title_activity_main">Private PDF</string>
+    <string name="package_name">app.privatepdf.mobile</string>
+    <string name="custom_url_scheme">app.privatepdf.mobile</string>
+</resources>
