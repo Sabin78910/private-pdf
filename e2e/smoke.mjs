@@ -186,6 +186,16 @@ try {
   const signed = await PDFDocument.load(await download(() => page.click('text=Download')));
   check(signed.getForm().getTextField('full_name').getText() === 'Sita Sharma', 'fill & sign fills the field');
 
+  await page.goto(`${origin}/#/protect`);
+  await page.setInputFiles('input[type=file]', await makePdf(2, 'P'));
+  await page.waitForSelector('#pw');
+  await page.fill('#pw', 'secret-123');
+  await page.fill('#pw2', 'secret-123');
+  await page.click('text=Start');
+  const locked = await download(() => page.click('text=Download'));
+  const lockedDoc = await PDFDocument.load(locked, { ignoreEncryption: true });
+  check(lockedDoc.isEncrypted && /\/AESV3/.test(Buffer.from(locked).toString('latin1')), 'protect encrypts with AES-256');
+
   await page.goto(`${origin}/#/history`);
   check((await page.locator('.chip').count()) >= 6, 'history lists jobs');
 

@@ -15,6 +15,7 @@ import { signTool } from './tools/sign';
 import { toImageTool } from './tools/toimage';
 import { pageNumbersTool } from './tools/pagenumbers';
 import { watermarkTool } from './tools/watermark';
+import { protectTool } from './tools/protect';
 import { icon, type IconName } from './ui/icons';
 import { otherTheme, resolveTheme, TOOL_GROUPS, type Theme } from './core/theme';
 
@@ -29,6 +30,7 @@ const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }
   { id: 'toimage', icon: 'toimage', render: toImageTool },
   { id: 'numbers', icon: 'numbers', render: pageNumbersTool },
   { id: 'watermark', icon: 'watermark', render: watermarkTool },
+  { id: 'protect', icon: 'protect', render: protectTool },
 ];
 
 const app = document.getElementById('app')!;

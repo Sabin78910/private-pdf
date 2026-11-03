@@ -12,5 +12,5 @@ export const TOOL_GROUPS: { id: string; tools: string[] }[] = [
   { id: 'scanocr', tools: ['scan', 'ocr'] },
   { id: 'edit', tools: ['merge', 'split', 'organize', 'numbers', 'watermark'] },
   { id: 'optimize', tools: ['compress', 'toimage'] },
-  { id: 'secure', tools: ['sign'] },
+  { id: 'secure', tools: ['sign', 'protect'] },
 ];
