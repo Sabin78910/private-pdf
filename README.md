@@ -49,5 +49,28 @@ download from the workflow run, so no local Android setup is needed.
 
 ## Releasing to Google Play
 
-Signing keys are never committed. Create an upload keystore, store it as a CI secret, and add a
-release job that runs `./gradlew bundleRelease`. See docs/FEATURES.md for the pre-release device test plan.
+`.github/workflows/release.yml` builds the Play bundle (`private-pdf-aab` artifact) on every push to
+`main`, on `v*` tags, or on demand. The version code is the run number, so each upload is higher.
+
+The bundle is signed only when these repository secrets exist (same upload key setup as the other apps;
+keys are never committed): `KEYSTORE_BASE64` (base64 of the `.jks`), `KEYSTORE_PASSWORD`, `KEY_ALIAS`,
+`KEY_PASSWORD`. Without them the bundle is unsigned.
+
+Store listing (English + Nepali), Data safety answers, icon, feature graphic and 1080×1920 screenshots
+are in `store/`, with the same text for fastlane in `fastlane/metadata/android/`. See docs/FEATURES.md
+for the pre-release device test plan.
+
+## Optional Google sign-in
+
+Sign-in is optional and hidden until a client ID is set. Tools never need it and documents are never
+uploaded. To switch it on:
+
+1. In [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials), create an
+   **OAuth client ID** of type **Web application**. Add your web URL (e.g. `https://your-site.example`) under
+   *Authorized JavaScript origins*.
+2. For Android, also create an **Android** OAuth client ID with package `app.privatepdf.mobile` and the
+   SHA-1 of your signing key (debug and Play App Signing keys each need one).
+3. Put the **Web** client ID in the GitHub repository variable `GOOGLE_CLIENT_ID`
+   (Settings → Secrets and variables → Actions → Variables). Locally: `VITE_GOOGLE_CLIENT_ID=... npm run build`.
+
+The client ID is public (it ships in the page), so it is a variable, not a secret.

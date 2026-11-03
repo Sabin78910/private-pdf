@@ -174,6 +174,11 @@ try {
   await page.goto(`${origin}/#/history`);
   check((await page.locator('.chip').count()) >= 6, 'history lists jobs');
 
+  if (await page.locator('a[href="#/account"]').count()) {
+    await page.goto(`${origin}/#/account`);
+    check(await page.getByText('Signing in is optional').isVisible(), 'sign-in page explains it is optional');
+  }
+
   check(foreign.length === 0, `no requests outside the app (${foreign.join(', ') || 'none'})`);
 } catch (e) {
   failures.push(String(e));

@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
 
+# Optional Google sign-in: set the repository variable GOOGLE_CLIENT_ID (Settings > Secrets and
+# variables > Actions > Variables). It is a public OAuth client ID, not a secret. Empty = sign-in hidden.
+env:
+  VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+
 jobs:
   web:
     runs-on: ubuntu-latest

@@ -105,6 +105,13 @@ const en = {
   'err.unknown': 'Something went wrong. Your original file is unchanged. Please try again.',
   retry: 'Try again',
   originalSafe: 'Your original file is never changed; results are saved as new files.',
+  account: 'Account',
+  signIn: 'Sign in',
+  signOut: 'Sign out',
+  signedInAs: 'Signed in as {name}',
+  signInWhy: 'Signing in is optional. Every tool works without an account, and your documents are never uploaded, signed in or not.',
+  signInData: 'Google shares only your name and email with this app. They are kept on this device and nothing is sent to us.',
+  signInFailed: 'Could not sign in. Check your internet connection and try again. All tools still work offline.',
 };
 
 type Dict = typeof en;
@@ -214,6 +221,13 @@ const ne: Dict = {
   'err.unknown': 'केही गडबड भयो। तपाईंको मूल फाइल सुरक्षित छ। फेरि प्रयास गर्नुहोस्।',
   retry: 'फेरि प्रयास',
   originalSafe: 'मूल फाइल कहिल्यै बदलिँदैन; नतिजा नयाँ फाइलमा बस्छ।',
+  account: 'खाता',
+  signIn: 'साइन इन',
+  signOut: 'साइन आउट',
+  signedInAs: '{name} को रूपमा साइन इन',
+  signInWhy: 'साइन इन गर्नु ऐच्छिक हो। खाता बिना पनि सबै उपकरण चल्छन्, र साइन इन गरे पनि नगरे पनि तपाईंका कागजात कहिल्यै अपलोड हुँदैनन्।',
+  signInData: 'Google ले यो एपलाई तपाईंको नाम र इमेल मात्र दिन्छ। ती यही उपकरणमा रहन्छन्, हामीलाई केही पठाइँदैन।',
+  signInFailed: 'साइन इन हुन सकेन। इन्टरनेट जडान जाँचेर फेरि प्रयास गर्नुहोस्। सबै उपकरण अफलाइन चलिरहन्छन्।',
 };
 
 export type Key = keyof Dict;

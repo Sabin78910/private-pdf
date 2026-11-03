@@ -3,10 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <!-- Strict CSP: connect-src 'self' means document content cannot be sent to any other server. -->
+    <!-- Strict CSP: document content cannot be sent to any other server. The only outside host is
+         Google's sign-in service (accounts.google.com/gsi), loaded only when the user taps "Sign in". -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' blob: data:; img-src 'self' blob: data:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client; frame-src https://accounts.google.com/gsi/; worker-src 'self' blob:; connect-src 'self' blob: data: https://accounts.google.com/gsi/; img-src 'self' blob: data:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"
     />
     <meta name="description" content="Private PDF: merge, split, compress, scan, OCR (Nepali + English), organize, fill and sign. Nothing is uploaded." />
     <meta name="theme-color" content="#1d4ed8" />

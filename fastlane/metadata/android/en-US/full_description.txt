@@ -1,0 +1,19 @@
+Private PDF does everyday PDF jobs **on your phone**. Your documents are never uploaded: every tool works offline, with no ads and no tracking.
+
+📷 **Scanner**: photograph forms, certificates and IDs. Edges are found automatically, the page is straightened, and filters clean up shadows. Multipage scans become one PDF.
+🔤 **OCR in Nepali + English**: copy text from photos and scans, or make a scanned PDF searchable. Works without internet.
+🗜️ **Compress PDF**: shrink large scans so they go through email and WhatsApp. Shows exactly how much was saved.
+➕ **Merge** forms, certificates and photos into one file
+✂️ **Split / extract** only the pages you need
+🗂️ **Organize pages**: reorder, rotate, delete, duplicate or add blank pages
+✍️ **Fill & Sign**: fill form fields, add your name and date, draw your signature with your finger
+🖼️ **PDF to image**: share pages as JPG or PNG
+🕘 **History** of what you did (file names only, kept on your phone)
+
+🔒 **Privacy first**
+• Files are processed on your device and never sent to any server
+• Your original file is never changed: results are saved as new files
+• No ads, no analytics, no account needed
+• Optional Google sign-in, used only to show your name
+
+🇳🇵 English and नेपाली
