@@ -1,4 +1,5 @@
 import { h, clear, announce } from './dom';
+import { icon } from './icons';
 import { t, type Key } from '../i18n';
 import { canShare, history, previewUrl, saveFile, shareFile, type OutputFile } from '../platform/files';
 import { formatBytes } from '../core/history';
@@ -51,7 +52,7 @@ export function filePicker(opts: {
       cam.value = '';
     },
   });
-  return h('div', { class: 'row wrap' }, zone, h('label', { class: 'btn' }, cam, '📷 ', t('takePhoto')));
+  return h('div', { class: 'row wrap' }, zone, h('label', { class: 'btn' }, cam, icon('scan', 18), t('takePhoto')));
 }
 
 export function errorKey(e: unknown): Key {
