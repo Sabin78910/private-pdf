@@ -13,6 +13,7 @@ import { ocrTool } from './tools/ocr';
 import { organizeTool } from './tools/organize';
 import { signTool } from './tools/sign';
 import { toImageTool } from './tools/toimage';
+import { pageNumbersTool } from './tools/pagenumbers';
 
 const TOOLS: { id: string; icon: string; render: (root: HTMLElement) => void }[] = [
   { id: 'compress', icon: '🗜️', render: compressTool },
@@ -23,6 +24,7 @@ const TOOLS: { id: string; icon: string; render: (root: HTMLElement) => void }[]
   { id: 'organize', icon: '🗂️', render: organizeTool },
   { id: 'sign', icon: '✍️', render: signTool },
   { id: 'toimage', icon: '🖼️', render: toImageTool },
+  { id: 'numbers', icon: '🔢', render: pageNumbersTool },
 ];
 
 const app = document.getElementById('app')!;

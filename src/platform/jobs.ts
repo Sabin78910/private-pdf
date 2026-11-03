@@ -3,6 +3,7 @@
 // Cancelling terminates the worker, which discards all in-memory intermediate data.
 import type { PagePlanItem } from '../core/organize';
 import type { ImageInput, PageFit } from '../core/imagesToPdf';
+import type { PageNumberOptions } from '../core/pageNumbers';
 import type { FillSignInput } from '../core/fillSign';
 
 export type JobRequest =
@@ -13,6 +14,7 @@ export type JobRequest =
   | { op: 'images'; images: ImageInput[]; fit: PageFit }
   | { op: 'compressLossless'; bytes: Uint8Array }
   | { op: 'fillSign'; bytes: Uint8Array; input: FillSignInput }
+  | { op: 'pageNumbers'; bytes: Uint8Array; options: PageNumberOptions }
   | { op: 'pageCount'; bytes: Uint8Array };
 
 export type JobMessage =

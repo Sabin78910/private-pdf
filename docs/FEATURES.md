@@ -26,6 +26,7 @@ Shared rules for every tool:
 | Organize | Reorder, rotate, delete, duplicate, insert blank | 1 PDF; thumbnails with buttons (touch/keyboard) and drag-drop (desktop) | `-organized.pdf` | Thumbnails render lazily; deleting the last page is blocked |
 | Fill & Sign | Complete and sign government, bank, school forms | 1 PDF; form fields, text stamps, drawn signature (finger / stylus / mouse) | `-signed.pdf`, optional lock (flatten) | Nepali text is placed as a correctly shaped image stamp; Nepali in form fields is explained (v1.1) |
 | PDF to Image | Share pages on WhatsApp / social | 1 PDF; JPG/PNG; 72/150/300 dpi; optional range | Image, or `.zip` of images | One page in memory at a time |
+| Page numbers | Number pages of applications, reports and theses | 1 PDF; position (6), style (1 / 1 of N / Page 1 of N), first number, skip cover | `-numbered.pdf` | Labels placed upright on rotated pages; protected or damaged files refused with a message |
 | Google sign-in (optional) | Show who is using the app; groundwork for later sync | Google account | Name + email stored on device | Not required for any tool; offline or failed sign-in shows a message and tools keep working |
 | History | Find what you did | — | List of tool, file name, size, time | Android: on device; Web: this browser session only. Clearable |
 

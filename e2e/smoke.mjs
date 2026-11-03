@@ -73,6 +73,13 @@ try {
   const png = await download(() => page.click('text=Download'));
   check(png[0] === 0xff && png[1] === 0xd8, 'pdf to image gives a JPEG');
 
+  await page.goto(`${origin}/#/numbers`);
+  await page.setInputFiles('input[type=file]', await makePdf(3, 'N'));
+  await page.waitForSelector('#startAt');
+  await page.click('text=Start');
+  const numbered = await PDFDocument.load(await download(() => page.click('text=Download')));
+  check(numbered.getPageCount() === 3, 'page numbers keeps 3 pages');
+
   // OCR: draw English text into an image in the page, then OCR it offline.
   const imgPath = join(dir, 'text.png');
   const b64 = await page.evaluate(() => {
