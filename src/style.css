@@ -197,3 +197,18 @@ fieldset { border: 1px solid var(--line); }
 .star.on svg { fill: currentColor; }
 .lib-add { margin: 20px 0 0; display: flex; }
 @media (max-width: 560px) { .lib-actions { margin-left: 56px; } }
+.rbar { position: sticky; top: calc(66px + env(safe-area-inset-top)); z-index: 5; display: flex; flex-direction: column; gap: 6px; padding: 10px; margin: 0 0 10px;
+  background: color-mix(in srgb, var(--card) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 16px; }
+.rbar .chips { padding: 0; }
+.swatch { appearance: none; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; }
+.swatch.on { border-color: var(--text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 40%, transparent); }
+.rpages { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.rpage { position: relative; width: 100%; max-width: 900px; background: #fff; border-radius: 6px; box-shadow: 0 2px 14px rgb(0 0 0 / 0.35); overflow: hidden; }
+.rcanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.roverlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.rpages:not([data-mode='read']) .roverlay { pointer-events: auto; touch-action: none; cursor: crosshair; }
+.roverlay .hl { mix-blend-mode: multiply; opacity: 0.85; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 0 16px calc(16px + env(safe-area-inset-bottom)); max-width: 640px; margin: 0 auto; }
+.sheet .card { box-shadow: 0 -8px 30px rgb(0 0 0 / 0.4); }
+.sheet textarea { width: 100%; }
+.rbar .chips { flex-wrap: wrap; }

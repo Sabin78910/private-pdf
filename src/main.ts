@@ -16,6 +16,7 @@ import { toImageTool } from './tools/toimage';
 import { pageNumbersTool } from './tools/pagenumbers';
 import { watermarkTool } from './tools/watermark';
 import { protectTool } from './tools/protect';
+import { readerTool } from './tools/reader';
 import { libraryView } from './ui/libraryView';
 import { icon, type IconName } from './ui/icons';
 import { otherTheme, resolveTheme, TOOL_GROUPS, type Theme } from './core/theme';
@@ -32,6 +33,7 @@ const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }
   { id: 'numbers', icon: 'numbers', render: pageNumbersTool },
   { id: 'watermark', icon: 'watermark', render: watermarkTool },
   { id: 'protect', icon: 'protect', render: protectTool },
+  { id: 'reader', icon: 'reader', render: readerTool },
 ];
 
 const app = document.getElementById('app')!;
@@ -161,7 +163,7 @@ function privacyView() {
 }
 
 function route() {
-  const id = location.hash.replace(/^#\/?/, '');
+  const id = location.hash.replace(/^#\/?/, '').split('?')[0];
   const tool = TOOLS.find((x) => x.id === id);
   document.title = tool ? `${t(`tool.${tool.id}` as Key)} · ${t('appName')}` : t('appName');
   let main: HTMLElement;
