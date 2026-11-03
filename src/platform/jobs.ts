@@ -6,6 +6,7 @@ import type { ImageInput, PageFit } from '../core/imagesToPdf';
 import type { PageNumberOptions } from '../core/pageNumbers';
 import type { WatermarkOptions } from '../core/watermark';
 import type { FillSignInput } from '../core/fillSign';
+import type { Annotation } from '../core/annotate';
 
 export type JobRequest =
   | { op: 'merge'; inputs: Uint8Array[] }
@@ -17,6 +18,7 @@ export type JobRequest =
   | { op: 'fillSign'; bytes: Uint8Array; input: FillSignInput }
   | { op: 'pageNumbers'; bytes: Uint8Array; options: PageNumberOptions }
   | { op: 'watermark'; bytes: Uint8Array; options: WatermarkOptions }
+  | { op: 'annotate'; bytes: Uint8Array; annotations: Annotation[] }
   | { op: 'protect'; bytes: Uint8Array; password: string }
   | { op: 'pageCount'; bytes: Uint8Array };
 

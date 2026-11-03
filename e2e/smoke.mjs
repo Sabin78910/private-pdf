@@ -198,6 +198,27 @@ try {
   const lockedDoc = await PDFDocument.load(locked, { ignoreEncryption: true });
   check(lockedDoc.isEncrypted && /\/AESV3/.test(Buffer.from(locked).toString('latin1')), 'protect encrypts with AES-256');
 
+  // Reader: drag a highlight and add a note, then save a copy with real annotations.
+  await page.goto(`${origin}/#/reader`);
+  await page.setInputFiles('input[type=file]', await makePdf(1, 'R'));
+  await page.waitForSelector('.rcanvas');
+  await page.click('.chipbtn >> text=Highlight');
+  await page.locator('.rpage').first().evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  let rb = await page.locator('.rpage').first().boundingBox();
+  const cy = Math.min(rb.y + rb.height / 2, 600);
+  await page.mouse.move(rb.x + 20, cy);
+  await page.mouse.down();
+  await page.mouse.move(rb.x + 200, cy + 30, { steps: 4 });
+  await page.mouse.up();
+  await page.click('.chipbtn >> text=Note');
+  rb = await page.locator('.rpage').first().boundingBox();
+  await page.mouse.click(rb.x + 40, cy + 80);
+  await page.fill('#noteText', 'Check this');
+  await page.click('text=Add note');
+  await page.click('text=Save annotated copy');
+  const annotated = await PDFDocument.load(await download(() => page.click('text=Download')));
+  check(annotated.getPage(0).node.Annots()?.size() === 2, 'reader saves a highlight and a note');
+
   // Library: keep a result, find it by search, file it in a new folder, favorite it.
   await page.goto(`${origin}/#/split`);
   await page.setInputFiles('input[type=file]', await makePdf(2, 'Keepme'));

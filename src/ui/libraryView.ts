@@ -62,6 +62,7 @@ export function libraryView(): HTMLElement {
       h('div', { class: 'row wrap lib-actions' },
         h('button', { class: `icon-btn star${it.favorite ? ' on' : ''}`, 'aria-pressed': it.favorite ? 'true' : 'false', 'aria-label': `${t('favorite')}: ${it.name}`,
           onclick: async () => (await store.updateItem({ ...it, favorite: !it.favorite }), void refresh()) }, icon('star', 18)),
+        it.mime === 'application/pdf' ? h('a', { class: 'btn small', href: `#/reader?lib=${encodeURIComponent(it.id)}` }, t('read')) : null,
         h('button', { class: 'btn small', onclick: open }, t('open')),
         canShare() ? h('button', { class: 'btn small', onclick: async () => shareFile(await store.readItem(it)).catch(() => {}) }, t('share')) : null,
         h('button', { class: 'btn small', onclick: async () => saveFile(await store.readItem(it, false)) }, t('download')),

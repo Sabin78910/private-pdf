@@ -9,6 +9,7 @@ import { loadPdf } from '../core/load';
 import { addPageNumbers } from '../core/pageNumbers';
 import { addWatermark } from '../core/watermark';
 import { protectPdf } from '../core/protect';
+import { addAnnotations } from '../core/annotate';
 import type { JobMessage, JobRequest } from './jobs';
 
 const post = (m: JobMessage, transfer: Transferable[] = []) => (self as DedicatedWorkerGlobalScope).postMessage(m, transfer);
@@ -34,6 +35,8 @@ async function run(req: JobRequest): Promise<unknown> {
       return addPageNumbers(req.bytes, req.options);
     case 'watermark':
       return addWatermark(req.bytes, req.options);
+    case 'annotate':
+      return addAnnotations(req.bytes, req.annotations);
     case 'protect':
       return protectPdf(req.bytes, req.password);
     case 'pageCount':
