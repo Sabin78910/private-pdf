@@ -3,7 +3,8 @@
   "appName": "Private PDF",
   "webDir": "dist",
   "android": {
-    "allowMixedContent": false
+    "allowMixedContent": false,
+    "adjustMarginsForEdgeToEdge": "auto"
   },
   "plugins": {
     "SocialLogin": {
