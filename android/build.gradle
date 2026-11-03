@@ -22,6 +22,11 @@ allprojects {
         google()
         mavenCentral()
     }
+    // capacitor-social-login asks for androidx.browser 1.9.0, which needs compileSdk 36 and AGP 8.9.
+    // It only uses Custom Tabs APIs that 1.8.0 already has, so pin 1.8.0 for every module.
+    configurations.configureEach {
+        resolutionStrategy.force 'androidx.browser:browser:1.8.0'
+    }
 }
 
 task clean(type: Delete) {
