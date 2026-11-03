@@ -198,6 +198,28 @@ try {
   const lockedDoc = await PDFDocument.load(locked, { ignoreEncryption: true });
   check(lockedDoc.isEncrypted && /\/AESV3/.test(Buffer.from(locked).toString('latin1')), 'protect encrypts with AES-256');
 
+  // Library: keep a result, find it by search, file it in a new folder, favorite it.
+  await page.goto(`${origin}/#/split`);
+  await page.setInputFiles('input[type=file]', await makePdf(2, 'Keepme'));
+  await page.fill('#range', '1');
+  await page.click('text=Start');
+  await page.click('text=Keep in Library');
+  await page.waitForSelector('text=Kept in Library');
+  await page.goto(`${origin}/#/library`);
+  await page.waitForSelector('.lib-item');
+  await page.fill('#libSearch', 'keepme');
+  check((await page.locator('.lib-item').count()) === 1, 'library finds the kept file by search');
+  await page.click('text=New folder');
+  await page.fill('#folderName', 'Bills');
+  await page.click('form.namer >> text=Save');
+  await page.waitForSelector('.chipbtn.on >> text=Bills');
+  await page.click('.chipbtn >> text=All');
+  await page.selectOption('.lib-item select', { label: 'Bills' });
+  await page.locator('.lib-item .star').click();
+  await page.click('.chipbtn >> text=Favorites');
+  await page.waitForSelector('.lib-item');
+  check((await page.locator('.lib-item').count()) === 1, 'library favorites and folders work');
+
   await page.goto(`${origin}/#/history`);
   check((await page.locator('.chip').count()) >= 6, 'history lists jobs');
 

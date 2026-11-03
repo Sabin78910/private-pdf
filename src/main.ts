@@ -16,6 +16,7 @@ import { toImageTool } from './tools/toimage';
 import { pageNumbersTool } from './tools/pagenumbers';
 import { watermarkTool } from './tools/watermark';
 import { protectTool } from './tools/protect';
+import { libraryView } from './ui/libraryView';
 import { icon, type IconName } from './ui/icons';
 import { otherTheme, resolveTheme, TOOL_GROUPS, type Theme } from './core/theme';
 
@@ -58,6 +59,7 @@ function initTheme() {
 
 const NAV: { href: string; key: Key; icon: IconName }[] = [
   { href: '#/', key: 'tools', icon: 'home' },
+  { href: '#/library', key: 'library', icon: 'library' },
   { href: '#/history', key: 'history', icon: 'history' },
   { href: '#/privacy', key: 'privacy', icon: 'shield' },
 ];
@@ -170,7 +172,8 @@ function route() {
         h('div', {}, h('h2', {}, t(`tool.${tool.id}` as Key)), h('p', {}, t(`tool.${tool.id}.desc` as Key)))),
       deviceBadge(), body);
     tool.render(body);
-  } else if (id === 'history') main = historyView();
+  } else if (id === 'library') main = libraryView();
+  else if (id === 'history') main = historyView();
   else if (id === 'privacy') main = privacyView();
   else if (id === 'account' && signInEnabled()) main = accountView();
   else main = home();
@@ -190,7 +193,9 @@ store, log or read the content of your files. There is no account, no ads and no
 <li>Your files and every result. Results are saved as new files; your original is never overwritten.</li>
 <li>Job history: only the tool name, file names, sizes and time. On Android it is kept on the device;
 on the web it is kept for the current browser session only. You can clear it at any time.</li>
-<li>Your language choice.</li>
+<li>Your Library: files you choose to keep, with their folders and favorites, are stored in the app's private
+storage on this device (browser storage on the web). Delete any of them at any time.</li>
+<li>Your language and theme choice.</li>
 </ul>
 <h3>Network</h3>
 <p>The app's security policy blocks connections to any other server, except Google's sign-in service when you choose to sign in. OCR language data for Nepali and
@@ -216,7 +221,8 @@ const PRIVACY_NE = `
 <ul>
 <li>तपाईंका फाइल र सबै नतिजा। नतिजा नयाँ फाइलमा बस्छ; मूल फाइल कहिल्यै बदलिँदैन।</li>
 <li>कामको इतिहास: उपकरणको नाम, फाइलको नाम, आकार र समय मात्र। एन्ड्रोइडमा उपकरणमै रहन्छ; वेबमा हालको ब्राउजर सत्रसम्म मात्र। जुनसुकै बेला मेटाउन सकिन्छ।</li>
-<li>तपाईंले रोजेको भाषा।</li>
+<li>तपाईंको लाइब्रेरी: तपाईंले राख्न रोजेका फाइल, फोल्डर र मनपर्ने सूची यही उपकरणको एपभित्रको निजी भण्डारमा (वेबमा ब्राउजर भण्डारमा) रहन्छन्। जुनसुकै बेला मेटाउन सकिन्छ।</li>
+<li>तपाईंले रोजेको भाषा र थिम।</li>
 </ul>
 <h3>नेटवर्क</h3>
 <p>एपको सुरक्षा नीतिले अरू कुनै सर्भरसँग जडान रोक्छ। नेपाली र अंग्रेजी OCR डाटा एपसँगै आउँछ, त्यसैले OCR अफलाइन चल्छ।</p>

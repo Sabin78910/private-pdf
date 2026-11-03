@@ -1,5 +1,6 @@
 import { h, clear, announce } from './dom';
 import { icon } from './icons';
+import { keepButton } from './libraryView';
 import { t, type Key } from '../i18n';
 import { canShare, history, previewUrl, saveFile, shareFile, type OutputFile } from '../platform/files';
 import { formatBytes } from '../core/history';
@@ -140,6 +141,7 @@ export class Runner {
         f.mime === 'application/pdf' || f.mime.startsWith('image/')
           ? h('a', { class: 'btn', href: previewUrl(f), target: '_blank', rel: 'noopener' }, t('open'))
           : null,
+        keepButton(f, this.tool),
       ];
       return h('div', { class: 'result' }, h('div', {}, h('strong', {}, f.name), h('div', { class: 'muted' }, formatBytes(f.bytes.length))), h('div', { class: 'row wrap' }, actions));
     });
