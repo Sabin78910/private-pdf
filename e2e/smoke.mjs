@@ -53,6 +53,8 @@ try {
 
   await page.goto(`${origin}/#/compress`);
   await page.setInputFiles('input[type=file]', await makePdf(3, 'C'));
+  await page.waitForSelector('.cmp img', { timeout: 20_000 });
+  check(await page.locator('.cmp-range').isVisible(), 'compress shows a before/after preview');
   await page.click('text=Start');
   await page.waitForSelector('.card.ok');
   const compressed = await download(() => page.click('text=Download'));
