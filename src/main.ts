@@ -14,6 +14,7 @@ import { organizeTool } from './tools/organize';
 import { signTool } from './tools/sign';
 import { toImageTool } from './tools/toimage';
 import { pageNumbersTool } from './tools/pagenumbers';
+import { watermarkTool } from './tools/watermark';
 
 const TOOLS: { id: string; icon: string; render: (root: HTMLElement) => void }[] = [
   { id: 'compress', icon: '🗜️', render: compressTool },
@@ -25,6 +26,7 @@ const TOOLS: { id: string; icon: string; render: (root: HTMLElement) => void }[]
   { id: 'sign', icon: '✍️', render: signTool },
   { id: 'toimage', icon: '🖼️', render: toImageTool },
   { id: 'numbers', icon: '🔢', render: pageNumbersTool },
+  { id: 'watermark', icon: '💧', render: watermarkTool },
 ];
 
 const app = document.getElementById('app')!;
