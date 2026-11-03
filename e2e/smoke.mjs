@@ -80,6 +80,14 @@ try {
   const numbered = await PDFDocument.load(await download(() => page.click('text=Download')));
   check(numbered.getPageCount() === 3, 'page numbers keeps 3 pages');
 
+  await page.goto(`${origin}/#/watermark`);
+  await page.setInputFiles('input[type=file]', await makePdf(2, 'W'));
+  await page.waitForSelector('#wmText');
+  await page.fill('#wmText', 'COPY');
+  await page.click('text=Start');
+  const marked = await PDFDocument.load(await download(() => page.click('text=Download')));
+  check(marked.getPageCount() === 2, 'watermark keeps 2 pages');
+
   // OCR: draw English text into an image in the page, then OCR it offline.
   const imgPath = join(dir, 'text.png');
   const b64 = await page.evaluate(() => {

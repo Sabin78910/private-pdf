@@ -6,7 +6,8 @@ export type PdfErrorCode =
   | 'unsupported-image'
   | 'no-input'
   | 'cancelled'
-  | 'font-unsupported';
+  | 'font-unsupported'
+  | 'text-unsupported';
 
 /** Error with a stable code so the UI can show an actionable, localised message. */
 export class PdfError extends Error {

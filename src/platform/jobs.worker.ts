@@ -7,6 +7,7 @@ import { compressLossless } from '../core/compress';
 import { fillAndSign } from '../core/fillSign';
 import { loadPdf } from '../core/load';
 import { addPageNumbers } from '../core/pageNumbers';
+import { addWatermark } from '../core/watermark';
 import type { JobMessage, JobRequest } from './jobs';
 
 const post = (m: JobMessage, transfer: Transferable[] = []) => (self as DedicatedWorkerGlobalScope).postMessage(m, transfer);
@@ -30,6 +31,8 @@ async function run(req: JobRequest): Promise<unknown> {
       return fillAndSign(req.bytes, req.input);
     case 'pageNumbers':
       return addPageNumbers(req.bytes, req.options);
+    case 'watermark':
+      return addWatermark(req.bytes, req.options);
     case 'pageCount':
       return (await loadPdf(req.bytes)).getPageCount();
   }
