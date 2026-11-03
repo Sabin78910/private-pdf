@@ -22,13 +22,11 @@ export function toImageTool(root: HTMLElement) {
       body,
       h('ul', { class: 'list' }, fileChip(file.name, file.size)),
       h('div', { class: 'row wrap' },
-        select('format', [['jpg', 'format'], ['png', 'format']], format, (v) => (format = v)),
-        select('resolution', [['72', 'resolution'], ['150', 'resolution'], ['300', 'resolution']], dpi, (v) => (dpi = v))),
+        select('format', [['jpg', { text: 'JPG' }], ['png', { text: 'PNG' }]], format, (v) => (format = v)),
+        select('resolution', [['72', { text: '72 dpi' }], ['150', { text: '150 dpi' }], ['300', { text: '300 dpi' }]], dpi, (v) => (dpi = v))),
       h('div', { class: 'field' }, h('label', { for: 'range' }, t('pageRange')), range),
-      h('button', { class: 'btn primary', onclick: () => start() }, t('start')),
+      h('button', { class: 'btn primary run', id: 'run', onclick: () => start() }, t('action.toimage')),
     );
-    // Option labels are values themselves (JPG/PNG, dpi), so show them plainly.
-    body.querySelectorAll('option').forEach((o) => (o.textContent = /^\d+$/.test(o.value) ? `${o.value} dpi` : o.value.toUpperCase()));
   };
 
   const start = () =>

@@ -148,7 +148,7 @@ export function scanTool(root: HTMLElement) {
       h('div', { class: 'row wrap' },
         select('filter', [['original', 'filter.original'], ['enhance', 'filter.enhance'], ['grayscale', 'filter.grayscale'], ['bw', 'filter.bw']], p.filter, (v) => (p.filter = v)),
         select('pageFit', [['a4', 'fit.a4'], ['fit', 'fit.fit']], fit, (v) => (fit = v))),
-      h('button', { class: 'btn primary', onclick: () => start() }, t('start'), ` (${pages.length})`),
+      h('button', { class: 'btn primary run', id: 'run', onclick: () => start() }, t('action.scan'), ` (${pages.length})`),
     );
   };
 

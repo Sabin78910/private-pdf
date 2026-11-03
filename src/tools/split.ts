@@ -25,7 +25,7 @@ export function splitTool(root: HTMLElement) {
       mode === 'extract'
         ? h('div', { class: 'field' }, h('label', { for: 'range' }, t('pageRange')), range)
         : h('div', { class: 'field' }, h('label', { for: 'every' }, t('everyN')), every),
-      h('button', { class: 'btn primary', onclick: () => start() }, t('start')),
+      h('button', { class: 'btn primary run', id: 'run', onclick: () => start() }, t('action.split')),
     );
   };
 

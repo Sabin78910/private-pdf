@@ -80,7 +80,7 @@ export function organizeTool(root: HTMLElement) {
         plan = identityPlan(n);
         clear(toolbar,
           h('button', { class: 'btn', onclick: () => ((plan = identityPlan(n)), draw()) }, t('reset')),
-          h('button', { class: 'btn primary', onclick: () => start() }, t('start')));
+          h('button', { class: 'btn primary run', id: 'run', onclick: () => start() }, t('action.organize')));
         draw();
         queueMicrotask(() => runner.reset());
         return { files: [], inputs: [] };

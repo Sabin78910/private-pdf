@@ -28,7 +28,7 @@ export function watermarkTool(root: HTMLElement) {
       h('div', { class: 'field' }, h('label', { for: 'wmText' }, t('wmText')), text),
       select('wmLayout', LAYOUTS.map((l) => [l, `wm.${l}`] as [WatermarkLayout, `wm.${WatermarkLayout}`]), layout, (v) => (layout = v)),
       select('wmOpacity', STRENGTHS.map((s) => [s, `wm.${s}`] as [Strength, `wm.${Strength}`]), strength, (v) => (strength = v)),
-      h('button', { class: 'btn primary', onclick: () => start() }, t('start')),
+      h('button', { class: 'btn primary run', id: 'run', onclick: () => start() }, t('action.watermark')),
     );
   };
 

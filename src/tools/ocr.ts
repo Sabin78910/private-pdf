@@ -24,12 +24,10 @@ export function ocrTool(root: HTMLElement) {
       body,
       h('ul', { class: 'list' }, files.map((f) => fileChip(f.name, f.size))),
       h('div', { class: 'row wrap' },
-        select('ocrLangs', [['nep+eng', 'tool.ocr'], ['nep', 'tool.ocr'], ['eng', 'tool.ocr']], lang, (v) => (lang = v)),
+        select('ocrLangs', [['nep+eng', 'lang.nep+eng'], ['nep', 'lang.nep'], ['eng', 'lang.eng']], lang, (v) => (lang = v)),
         select('ocrOutput', [['pdf', 'ocr.pdf'], ['text', 'ocr.text']], output, (v) => (output = v))),
-      h('button', { class: 'btn primary', onclick: () => start() }, t('start')),
+      h('button', { class: 'btn primary run', id: 'run', onclick: () => start() }, t('action.ocr')),
     );
-    const names: Record<string, string> = { 'nep+eng': 'नेपाली + English', nep: 'नेपाली', eng: 'English' };
-    body.querySelectorAll('select')[0].querySelectorAll('option').forEach((o) => (o.textContent = names[o.value]));
   };
 
   /** Yields each page/image as a canvas so memory holds one page at a time. */

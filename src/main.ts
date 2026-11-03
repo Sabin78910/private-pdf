@@ -1,8 +1,15 @@
+import '@fontsource-variable/inter';
+import '@fontsource/noto-sans-devanagari/devanagari-400.css';
+import '@fontsource/noto-sans-devanagari/devanagari-600.css';
+import '@fontsource/noto-sans-devanagari/devanagari-700.css';
 import './style.css';
 import { h, clear } from './ui/dom';
 import { initLang, lang, setLang, t, type Key } from './i18n';
 import { history, isNative } from './platform/files';
 import { formatBytes } from './core/history';
+import { PRIVACY_EN, PRIVACY_NE } from './ui/privacyText';
+import { listItems, libraryAvailable } from './platform/libraryStore';
+import { viewItems, matchesQuery, type LibraryItem } from './core/library';
 import { initials } from './core/auth';
 import { currentAccount, signIn, signInEnabled, signOut } from './platform/auth';
 import { mergeTool } from './tools/merge';
@@ -19,7 +26,8 @@ import { protectTool } from './tools/protect';
 import { readerTool } from './tools/reader';
 import { libraryView } from './ui/libraryView';
 import { icon, type IconName } from './ui/icons';
-import { otherTheme, resolveTheme, TOOL_GROUPS, type Theme } from './core/theme';
+import { greeting, matchTool, QUICK_TOOLS, resolveTheme, TOOL_GROUPS, toolHue, type Theme } from './core/theme';
+import { allKeys } from './i18n';
 
 const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }[] = [
   { id: 'compress', icon: 'compress', render: compressTool },
@@ -37,12 +45,13 @@ const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }
 ];
 
 const app = document.getElementById('app')!;
+const VERSION = '1.2.0';
 
 let theme: Theme = 'dark';
 function applyTheme(next: Theme) {
   theme = next;
   document.documentElement.dataset.theme = next;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0a0f1e' : '#f4f6fb');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0b0f17' : '#f6f7f9');
   try {
     localStorage.setItem('pdfapp.theme', next);
   } catch {
@@ -59,40 +68,41 @@ function initTheme() {
   applyTheme(resolveTheme(saved));
 }
 
-const NAV: { href: string; key: Key; icon: IconName }[] = [
-  { href: '#/', key: 'tools', icon: 'home' },
-  { href: '#/library', key: 'library', icon: 'library' },
-  { href: '#/history', key: 'history', icon: 'history' },
-  { href: '#/privacy', key: 'privacy', icon: 'shield' },
+type Tab = '' | 'tools' | 'library' | 'settings';
+const TABS: { id: Tab; key: Key; icon: IconName }[] = [
+  { id: '', key: 'homeTab', icon: 'home' },
+  { id: 'tools', key: 'tools', icon: 'organize' },
+  { id: 'library', key: 'library', icon: 'library' },
+  { id: 'settings', key: 'settings', icon: 'gear' },
 ];
-const isCurrent = (href: string, id: string) => (href === '#/' ? id === '' : href === `#/${id}`);
+let lastTab: Tab = '';
 
-function header(id: string) {
-  const themeLabel = t(theme === 'dark' ? 'theme.light' : 'theme.dark');
-  return h('header', { class: 'top' },
-    h('a', { href: '#/', class: 'brand' }, h('span', { class: 'mark' }, icon('logo', 20)), t('appName')),
-    h('nav', { class: 'links' },
-      NAV.map((n) => h('a', { href: n.href, class: 'tab', 'aria-current': isCurrent(n.href, id) ? 'page' : null }, t(n.key))),
-      signInEnabled() ? accountLink() : null,
-      h('button', { class: 'icon-btn', 'aria-label': themeLabel, title: themeLabel, onclick: () => (applyTheme(otherTheme(theme)), route()) },
-        icon(theme === 'dark' ? 'sun' : 'moon', 20)),
-      h('button', { class: 'btn small', lang: lang() === 'en' ? 'ne' : 'en', onclick: () => (setLang(lang() === 'en' ? 'ne' : 'en'), route()) }, t('language'))));
+const toolName = (id: string) => t(`tool.${id}` as Key);
+
+function appbar(opts: { title?: string; back?: boolean; brand?: boolean; fade?: boolean }) {
+  const right = signInEnabled() ? accountLink() : null;
+  return h('header', { class: 'appbar' },
+    opts.back
+      ? h('a', { class: 'icon-btn', href: `#/${lastTab}`, 'aria-label': t('back') }, icon('back', 22))
+      : null,
+    opts.brand
+      ? h('a', { href: '#/', class: 'brand' }, h('span', { class: 'mark' }, icon('logo', 18)), t('appName'))
+      : h('span', { class: `title${opts.fade ? ' fade' : ''}` }, opts.title ?? ''),
+    opts.brand ? h('span', { class: 'grow' }) : null,
+    right);
 }
 
 function tabbar(id: string) {
-  return h('nav', { class: 'tabbar', 'aria-label': t('tools') },
-    NAV.map((n) => h('a', { href: n.href, 'aria-current': isCurrent(n.href, id) ? 'page' : null }, icon(n.icon, 22), t(n.key))));
-}
-
-function deviceBadge() {
-  return h('p', { class: 'badge' }, h('span', { class: 'dot', 'aria-hidden': 'true' }), t('privacyBadge'));
+  return h('nav', { class: 'tabbar', 'aria-label': t('appName') }, h('div', { class: 'tabbar-in' },
+    TABS.map((n) => h('a', { href: `#/${n.id}`, 'aria-current': n.id === id ? 'page' : null },
+      h('span', { class: 'pill' }, icon(n.icon, 22)), t(n.key)))));
 }
 
 function accountLink() {
   const a = currentAccount();
   return a
     ? h('a', { href: '#/account', class: 'avatar', title: a.email, 'aria-label': t('signedInAs', { name: a.name }) }, initials(a))
-    : h('a', { href: '#/account' }, t('signIn'));
+    : null;
 }
 
 function accountView() {
@@ -109,9 +119,9 @@ function accountView() {
   const start = h('button', { class: 'btn primary', onclick: () => {
     start.disabled = true;
     signIn(host, lang())
-      .then(() => ((location.hash = '#/'), route()))
+      .then(() => ((location.hash = '#/settings'), route()))
       .catch(() => ((status.textContent = t('signInFailed')), (start.disabled = false)));
-  } }, 'G  ', t('signIn'));
+  } }, t('signIn'));
   host.append(start);
   return h('main', { class: 'prose' },
     h('h2', {}, t('account')),
@@ -120,27 +130,101 @@ function accountView() {
     host, status);
 }
 
-function toolCard(id: string) {
-  const tool = TOOLS.find((x) => x.id === id)!;
-  return h('li', {}, h('a', { class: 'tile', href: `#/${tool.id}` },
-    h('span', { class: 'ico' }, icon(tool.icon)),
-    h('span', {}, h('strong', {}, t(`tool.${tool.id}` as Key)), h('span', { class: 'muted small' }, t(`tool.${tool.id}.desc` as Key))),
-    h('span', { class: 'go' }, icon('chevron', 18))));
+function toolTile(id: string) {
+  const tool = TOOLS.find((x) => x.id === id);
+  if (!tool) return null;
+  return h('li', {}, h('a', { href: `#/${tool.id}` },
+    h('span', { class: `chipico hue-${toolHue(id)}` }, icon(tool.icon, 26)),
+    h('span', { class: 'lbl' }, toolName(id))));
+}
+
+const when = (ms: number) => new Date(ms).toLocaleDateString(lang() === 'ne' ? 'ne-NP' : 'en-GB', { day: 'numeric', month: 'short' });
+
+function fileRow(it: LibraryItem) {
+  const pdf = it.mime === 'application/pdf';
+  return h('li', {}, h('a', { class: 'rowi', href: pdf ? `#/reader?lib=${encodeURIComponent(it.id)}` : '#/library' },
+    h('span', { class: `thumb-doc${pdf ? '' : ' img'}` }, icon(pdf ? 'file' : 'toimage', 20)),
+    h('span', { class: 'grow' }, h('span', { class: 't' }, it.name), h('span', { class: 'm' }, `${formatBytes(it.size)} · ${when(it.openedAt)}`)),
+    h('span', { class: 'end' }, icon('chevron', 18))));
 }
 
 function home() {
+  const results = h('div');
+  const sections = h('div');
+  const recent = h('ul', { class: 'group' }, h('li', { class: 'empty-row' }, t('recentEmpty')));
+  let items: LibraryItem[] = [];
+  if (libraryAvailable())
+    void listItems().then((all) => {
+      items = all;
+      const top = viewItems(all, { kind: 'recent' }).slice(0, 4);
+      if (top.length) clear(recent, top.map(fileRow));
+    }).catch(() => {});
+  const search = h('input', { type: 'search', id: 'homeSearch', placeholder: t('searchAll'), 'aria-label': t('searchAll'), oninput: () => {
+    const q = search.value.trim();
+    sections.hidden = !!q;
+    if (!q) return clear(results);
+    const tools = TOOLS.filter((x) => matchTool([allKeys.en[`tool.${x.id}` as Key], allKeys.ne[`tool.${x.id}` as Key]], q));
+    const files = items.filter((i) => matchesQuery(i.name, q)).slice(0, 8);
+    clear(results,
+      tools.length ? h('section', { class: 'section' }, h('div', { class: 'caption-label' }, t('tools')), h('ul', { class: 'tgrid' }, tools.map((x) => toolTile(x.id)))) : null,
+      files.length ? h('section', { class: 'section' }, h('div', { class: 'caption-label' }, t('library')), h('ul', { class: 'group' }, files.map(fileRow))) : null,
+      !tools.length && !files.length ? h('p', { class: 'empty-row' }, t('noResults', { q })) : null);
+  } });
+  clear(sections,
+    h('div', { class: 'actions2' },
+      h('a', { class: 'qa main', href: '#/scan' }, h('span', { class: 'qi' }, icon('scan', 24)),
+        h('span', {}, h('strong', {}, t('qa.scan')), h('span', { class: 's' }, t('qa.scan.desc')))),
+      h('a', { class: 'qa', href: '#/reader' }, h('span', { class: 'qi' }, icon('reader', 24)),
+        h('span', {}, h('strong', {}, t('qa.open')), h('span', { class: 's' }, t('qa.open.desc'))))),
+    h('section', { class: 'section' },
+      h('div', { class: 'section-head' }, h('h2', {}, t('quickTools')), h('a', { href: '#/tools' }, t('allTools'))),
+      h('ul', { class: 'tgrid' }, QUICK_TOOLS.map(toolTile))),
+    h('section', { class: 'section' },
+      h('div', { class: 'section-head' }, h('h2', {}, t('recent')), h('a', { href: '#/library' }, t('seeAll'))),
+      recent));
   return h('main', {},
-    h('section', { class: 'hero' },
-      h('h1', {}, t('heroTitle')),
-      h('p', {}, t('heroBody')),
-      h('ul', { class: 'facts' },
-        h('li', {}, icon('device', 16), t('fact.device')),
-        h('li', {}, icon('wifiOff', 16), t('fact.offline')),
-        h('li', {}, icon('lock', 16), t('fact.noAccount')))),
-    TOOL_GROUPS.map((g) => h('section', { class: 'group' },
-      h('h2', {}, t(`group.${g.id}` as Key)),
-      h('ul', { class: 'grid' }, g.tools.filter((id) => TOOLS.some((x) => x.id === id)).map(toolCard)))),
-    h('p', { class: 'foot' }, icon('shield', 16), t('footNote')));
+    h('div', { class: 'largetitle' }, h('h1', {}, t(`greet.${greeting(new Date().getHours())}` as Key)),
+      h('p', {}, icon('shield', 16), t('homeSub'))),
+    h('label', { class: 'searchbox' }, icon('search', 20), search),
+    sections, results,
+    h('p', { class: 'trust' }, icon('lock', 16), t('aboutBody')));
+}
+
+function toolsView() {
+  return h('main', {},
+    h('div', { class: 'largetitle' }, h('h1', {}, t('tools')), h('p', {}, icon('shield', 16), t('privacyBadge'))),
+    TOOL_GROUPS.map((g) => h('section', { class: 'section' },
+      h('div', { class: 'section-head' }, h('h2', {}, t(`group.${g.id}` as Key))),
+      h('ul', { class: 'tgrid' }, g.tools.map(toolTile)))));
+}
+
+function segmented<T extends string>(name: string, label: Key, options: [T, string][], value: T, onChange: (v: T) => void) {
+  return h('div', { class: 'optgroup', role: 'radiogroup', 'aria-label': t(label) },
+    h('div', { class: 'opts seg' }, options.map(([v, text]) => h('label', { class: 'opt' },
+      h('input', { type: 'radio', name, value: v, checked: v === value, onchange: () => onChange(v) }),
+      h('span', { class: 'o-t' }, text)))));
+}
+
+function settingsRow(href: string, ico: IconName, title: string, sub?: string) {
+  return h('a', { class: 'rowi', href }, h('span', { class: 'setico' }, icon(ico, 20)),
+    h('span', { class: 'grow' }, h('span', { class: 't' }, title), sub ? h('span', { class: 'm' }, sub) : null),
+    h('span', { class: 'end' }, icon('chevron', 18)));
+}
+
+function settingsView() {
+  const a = signInEnabled() ? currentAccount() : null;
+  return h('main', {},
+    h('div', { class: 'largetitle' }, h('h1', {}, t('settings'))),
+    h('div', { class: 'caption-label' }, t('appearance')),
+    segmented('theme', 'appearance', [['dark', t('theme.dark')], ['light', t('theme.light')]], theme, (v) => (applyTheme(v), route())),
+    h('div', { class: 'caption-label', style: 'margin-top:24px' }, t('languageLabel')),
+    segmented('lang', 'languageLabel', [['en', 'English'], ['ne', 'नेपाली']], lang(), (v) => (setLang(v), route())),
+    h('div', { class: 'caption-label', style: 'margin-top:24px' }, t('about')),
+    h('div', { class: 'group' },
+      signInEnabled() ? settingsRow('#/account', 'device', t('account'), a ? a.email : t('signIn')) : null,
+      settingsRow('#/history', 'history', t('history')),
+      settingsRow('#/privacy', 'shield', t('privacy'))),
+    h('p', { class: 'trust' }, icon('lock', 16), h('span', {}, t('aboutBody'), h('br'), t('version', { v: VERSION }))));
 }
 
 function historyView() {
@@ -148,12 +232,11 @@ function historyView() {
   const list = h('ul', { class: 'list' },
     items.map((e) => h('li', { class: 'chip' },
       h('span', { class: 'grow' }, h('strong', {}, t(`tool.${e.tool}` as Key)), ' · ', e.output, ' ', h('span', { class: 'muted' }, formatBytes(e.outputSize))),
-      h('time', { class: 'muted small', datetime: new Date(e.at).toISOString() }, new Date(e.at).toLocaleString(lang() === 'ne' ? 'ne-NP' : 'en-GB')))));
+      h('time', { class: 'muted small', datetime: new Date(e.at).toISOString() }, when(e.at)))));
   return h('main', {},
-    h('h2', {}, t('history')),
-    h('p', { class: 'muted' }, t(isNative() ? 'historyNoteApp' : 'historyNoteWeb')),
-    items.length ? list : h('div', { class: 'empty' }, h('span', { class: 'ico' }, icon('history', 28)), h('p', {}, t(isNative() ? 'historyEmptyApp' : 'historyEmptyWeb'))),
-    items.length ? h('button', { class: 'btn', onclick: () => (history.clear(), route()) }, t('clearHistory')) : null);
+    h('p', { class: 'screen-sub' }, t(isNative() ? 'historyNoteApp' : 'historyNoteWeb')),
+    items.length ? list : h('div', { class: 'card empty-row' }, t(isNative() ? 'historyEmptyApp' : 'historyEmptyWeb')),
+    items.length ? h('button', { class: 'btn ghost danger', style: 'margin-top:12px', onclick: () => (history.clear(), route()) }, t('clearHistory')) : null);
 }
 
 function privacyView() {
@@ -165,77 +248,34 @@ function privacyView() {
 function route() {
   const id = location.hash.replace(/^#\/?/, '').split('?')[0];
   const tool = TOOLS.find((x) => x.id === id);
-  document.title = tool ? `${t(`tool.${tool.id}` as Key)} · ${t('appName')}` : t('appName');
+  const isTab = TABS.some((x) => x.id === id);
+  if (isTab) lastTab = id as Tab;
+  document.title = tool ? `${toolName(tool.id)} · ${t('appName')}` : t('appName');
   let main: HTMLElement;
+  let bar: HTMLElement;
   if (tool) {
     const body = h('section', { class: 'tool' });
-    main = h('main', {}, h('a', { href: '#/', class: 'back' }, icon('back', 18), t('home')),
-      h('div', { class: 'toolhead' }, h('span', { class: 'ico' }, icon(tool.icon)),
-        h('div', {}, h('h2', {}, t(`tool.${tool.id}` as Key)), h('p', {}, t(`tool.${tool.id}.desc` as Key)))),
-      deviceBadge(), body);
+    main = h('main', {},
+      h('h2', { class: 'screen-title' }, toolName(tool.id)),
+      h('p', { class: 'screen-sub' }, t(`tool.${tool.id}.desc` as Key)),
+      body);
+    bar = appbar({ back: true, title: toolName(tool.id), fade: true });
     tool.render(body);
-  } else if (id === 'library') main = libraryView();
-  else if (id === 'history') main = historyView();
-  else if (id === 'privacy') main = privacyView();
-  else if (id === 'account' && signInEnabled()) main = accountView();
-  else main = home();
-  clear(app, header(id), main, tabbar(id), h('div', { id: 'live', class: 'visually-hidden', 'aria-live': 'polite' }));
+  } else if (id === 'library') (main = libraryView()), (bar = appbar({ brand: true }));
+  else if (id === 'tools') (main = toolsView()), (bar = appbar({ brand: true }));
+  else if (id === 'settings') (main = settingsView()), (bar = appbar({ brand: true }));
+  else if (id === 'history') (main = historyView()), (bar = appbar({ back: true, title: t('history') }));
+  else if (id === 'privacy') (main = privacyView()), (bar = appbar({ back: true, title: t('privacy') }));
+  else if (id === 'account' && signInEnabled()) (main = accountView()), (bar = appbar({ back: true, title: t('account') }));
+  else (main = home()), (bar = appbar({ brand: true }));
+  clear(app, bar, main, tabbar(isTab ? id : lastTab), h('div', { id: 'live', class: 'visually-hidden', 'aria-live': 'polite' }));
+  window.scrollTo(0, 0);
   const heading = main.querySelector<HTMLElement>('h1, h2');
   heading?.setAttribute('tabindex', '-1');
-  heading?.focus();
+  heading?.focus({ preventScroll: true });
 }
 
-const PRIVACY_EN = `
-<h2>Privacy policy</h2>
-<p><strong>Your documents never leave your device.</strong> Every tool in Private PDF (merge, split, compress,
-scan, OCR, organize, fill &amp; sign, PDF to image) runs inside the app or your browser. We do not upload,
-store, log or read the content of your files. There is no account, no ads and no analytics.</p>
-<h3>What stays on your device</h3>
-<ul>
-<li>Your files and every result. Results are saved as new files; your original is never overwritten.</li>
-<li>Job history: only the tool name, file names, sizes and time. On Android it is kept on the device;
-on the web it is kept for the current browser session only. You can clear it at any time.</li>
-<li>Your Library: files you choose to keep, with their folders and favorites, are stored in the app's private
-storage on this device (browser storage on the web). Delete any of them at any time.</li>
-<li>Your language and theme choice.</li>
-</ul>
-<h3>Network</h3>
-<p>The app's security policy blocks connections to any other server, except Google's sign-in service when you choose to sign in. OCR language data for Nepali and
-English is bundled with the app, so OCR works offline. On the web, the page itself is downloaded from our
-host like any website; your documents are not sent with it.</p>
-<h3>Permissions (Android)</h3>
-<ul><li>Camera: only when you choose “Take photo” in the scanner or OCR.</li>
-<li>Files: only the files you pick, and saving results to Documents/PrivatePDF.</li></ul>
-<h3>Sharing</h3><p>Files leave your device only when you tap Share and choose an app yourself.</p>
-<h3>Optional Google sign-in</h3><p>You never need an account. If you choose to sign in with Google, Google
-shares your name and email with the app; they are stored only on your device so we can show who is signed in.
-Signing in contacts Google only. Your documents are never uploaded, whether you are signed in or not. Sign out at
-any time from the Account page.</p>
-<h3>Future AI features</h3><p>Any feature that needs cloud processing will be off by default, clearly labelled,
-and will ask for your explicit consent first.</p>`;
-
-const PRIVACY_NE = `
-<h2>गोपनीयता नीति</h2>
-<p><strong>तपाईंका कागजात कहिल्यै तपाईंको उपकरणबाट बाहिर जाँदैनन्।</strong> प्राइभेट PDF का सबै उपकरण
-(जोड्ने, छुट्याउने, सानो बनाउने, स्क्यान, OCR, पाना मिलाउने, भर्ने र हस्ताक्षर, PDF बाट फोटो) एप वा ब्राउजरभित्रै चल्छन्।
-हामी तपाईंका फाइलको सामग्री अपलोड, भण्डारण, लग वा पढ्दैनौं। खाता, विज्ञापन वा एनालिटिक्स छैन।</p>
-<h3>तपाईंको उपकरणमै रहने कुरा</h3>
-<ul>
-<li>तपाईंका फाइल र सबै नतिजा। नतिजा नयाँ फाइलमा बस्छ; मूल फाइल कहिल्यै बदलिँदैन।</li>
-<li>कामको इतिहास: उपकरणको नाम, फाइलको नाम, आकार र समय मात्र। एन्ड्रोइडमा उपकरणमै रहन्छ; वेबमा हालको ब्राउजर सत्रसम्म मात्र। जुनसुकै बेला मेटाउन सकिन्छ।</li>
-<li>तपाईंको लाइब्रेरी: तपाईंले राख्न रोजेका फाइल, फोल्डर र मनपर्ने सूची यही उपकरणको एपभित्रको निजी भण्डारमा (वेबमा ब्राउजर भण्डारमा) रहन्छन्। जुनसुकै बेला मेटाउन सकिन्छ।</li>
-<li>तपाईंले रोजेको भाषा र थिम।</li>
-</ul>
-<h3>नेटवर्क</h3>
-<p>एपको सुरक्षा नीतिले अरू कुनै सर्भरसँग जडान रोक्छ। नेपाली र अंग्रेजी OCR डाटा एपसँगै आउँछ, त्यसैले OCR अफलाइन चल्छ।</p>
-<h3>अनुमति (एन्ड्रोइड)</h3>
-<ul><li>क्यामेरा: स्क्यानर वा OCR मा “फोटो खिच्नुहोस्” रोज्दा मात्र।</li>
-<li>फाइल: तपाईंले छानेका फाइल मात्र, र नतिजा Documents/PrivatePDF मा सेभ गर्न।</li></ul>
-<h3>सेयर</h3><p>तपाईंले सेयर थिचेर आफैं एप रोज्दा मात्र फाइल बाहिर जान्छ।</p>
-<h3>ऐच्छिक Google साइन इन</h3><p>खाता कहिल्यै अनिवार्य छैन। Google बाट साइन इन गर्नुभयो भने Google ले तपाईंको नाम र इमेल एपलाई दिन्छ;
-ती तपाईंको उपकरणमा मात्र राखिन्छन्। साइन इनले Google सँग मात्र सम्पर्क गर्छ। साइन इन गरे पनि नगरे पनि तपाईंका कागजात कहिल्यै
-अपलोड हुँदैनन्। खाता पानाबाट जुनसुकै बेला साइन आउट गर्न सकिन्छ।</p>
-<h3>भविष्यका AI सुविधा</h3><p>क्लाउड चाहिने कुनै पनि सुविधा सुरुमा बन्द रहनेछ, स्पष्ट लेखिनेछ र तपाईंको स्पष्ट सहमति माग्नेछ।</p>`;
+window.addEventListener('scroll', () => document.querySelector('.appbar')?.classList.toggle('scrolled', scrollY > 4), { passive: true });
 
 initLang();
 initTheme();

@@ -40,24 +40,24 @@ async function download(trigger) {
 try {
   await page.goto(`${origin}/#/merge`);
   await page.setInputFiles('input[type=file]', [await makePdf(2, 'A'), await makePdf(3, 'B')]);
-  await page.click('text=Start');
-  const merged = await download(() => page.click('text=Download'));
+  await page.click('#run');
+  const merged = await download(() => page.click('.act-save >> nth=0'));
   check((await PDFDocument.load(merged)).getPageCount() === 5, 'merge 2+3 pages = 5');
 
   await page.goto(`${origin}/#/split`);
   await page.setInputFiles('input[type=file]', await makePdf(6, 'S'));
   await page.fill('#range', '2-3, 6');
-  await page.click('text=Start');
-  const split = await download(() => page.click('text=Download'));
+  await page.click('#run');
+  const split = await download(() => page.click('.act-save >> nth=0'));
   check((await PDFDocument.load(split)).getPageCount() === 3, 'split extract 2-3,6 = 3 pages');
 
   await page.goto(`${origin}/#/compress`);
   await page.setInputFiles('input[type=file]', await makePdf(3, 'C'));
   await page.waitForSelector('.cmp img', { timeout: 20_000 });
   check(await page.locator('.cmp-range').isVisible(), 'compress shows a before/after preview');
-  await page.click('text=Start');
+  await page.click('#run');
   await page.waitForSelector('.card.ok');
-  const compressed = await download(() => page.click('text=Download'));
+  const compressed = await download(() => page.click('.act-save >> nth=0'));
   check((await PDFDocument.load(compressed)).getPageCount() === 3, 'compress medium keeps 3 pages');
 
   await page.goto(`${origin}/#/organize`);
@@ -65,29 +65,29 @@ try {
   await page.waitForSelector('.page');
   await page.locator('.page').nth(0).getByLabel('Delete').click();
   await page.locator('.page').nth(0).getByLabel('Rotate right').click();
-  await page.click('text=Start');
-  const organized = await PDFDocument.load(await download(() => page.click('text=Download')));
+  await page.click('#run');
+  const organized = await PDFDocument.load(await download(() => page.click('.act-save >> nth=0')));
   check(organized.getPageCount() === 2 && organized.getPage(0).getRotation().angle === 90, 'organize delete + rotate');
 
   await page.goto(`${origin}/#/toimage`);
   await page.setInputFiles('input[type=file]', await makePdf(1, 'I'));
-  await page.click('text=Start');
-  const png = await download(() => page.click('text=Download'));
+  await page.click('#run');
+  const png = await download(() => page.click('.act-save >> nth=0'));
   check(png[0] === 0xff && png[1] === 0xd8, 'pdf to image gives a JPEG');
 
   await page.goto(`${origin}/#/numbers`);
   await page.setInputFiles('input[type=file]', await makePdf(3, 'N'));
   await page.waitForSelector('#startAt');
-  await page.click('text=Start');
-  const numbered = await PDFDocument.load(await download(() => page.click('text=Download')));
+  await page.click('#run');
+  const numbered = await PDFDocument.load(await download(() => page.click('.act-save >> nth=0')));
   check(numbered.getPageCount() === 3, 'page numbers keeps 3 pages');
 
   await page.goto(`${origin}/#/watermark`);
   await page.setInputFiles('input[type=file]', await makePdf(2, 'W'));
   await page.waitForSelector('#wmText');
   await page.fill('#wmText', 'COPY');
-  await page.click('text=Start');
-  const marked = await PDFDocument.load(await download(() => page.click('text=Download')));
+  await page.click('#run');
+  const marked = await PDFDocument.load(await download(() => page.click('.act-save >> nth=0')));
   check(marked.getPageCount() === 2, 'watermark keeps 2 pages');
 
   // OCR: draw English text into an image in the page, then OCR it offline.
@@ -107,12 +107,12 @@ try {
   writeFileSync(imgPath, Buffer.from(b64, 'base64'));
   await page.goto(`${origin}/#/ocr`);
   await page.setInputFiles('input[type=file] >> nth=0', imgPath);
-  await page.selectOption('select >> nth=1', 'pdf');
-  await page.click('text=Start');
+  await page.check('input[type=radio][value=pdf]', { force: true });
+  await page.click('#run');
   await page.waitForSelector('.card.ok, .card.err', { timeout: 120_000 });
   const text = await page.inputValue('.ocr-text').catch(() => '');
   check(/offline/i.test(text), `OCR reads text (got: ${JSON.stringify(text.trim().slice(0, 60))})`);
-  const searchable = await download(() => page.click('text=Download'));
+  const searchable = await download(() => page.click('.act-save >> nth=0'));
   check((await PDFDocument.load(searchable)).getPageCount() === 1, 'OCR searchable PDF has 1 page');
 
   // Nepali OCR (needs a Devanagari font to draw the test image: NEPALI_FONT=/path/to/font.woff2).
@@ -138,8 +138,8 @@ try {
     writeFileSync(nePath, Buffer.from(neB64, 'base64'));
     await page.goto(`${origin}/#/ocr`);
     await page.setInputFiles('input[type=file] >> nth=0', nePath);
-    await page.selectOption('select >> nth=1', 'text');
-    await page.click('text=Start');
+    await page.check('input[type=radio][value=text]', { force: true });
+    await page.click('#run');
     await page.waitForSelector('.card.ok, .card.err', { timeout: 120_000 });
     const ne = await page.inputValue('.ocr-text').catch(() => '');
     check(/नेपाल/.test(ne) && /सरकार/.test(ne), `Nepali OCR (got: ${JSON.stringify(ne.trim())})`);
@@ -167,8 +167,8 @@ try {
   await page.goto(`${origin}/#/scan`);
   await page.setInputFiles('input[type=file] >> nth=0', [scanPath, scanPath]);
   await page.waitForSelector('canvas.editor');
-  await page.click('button.primary:has-text("Start")');
-  const scanned = await PDFDocument.load(await download(() => page.click('text=Download')));
+  await page.click('#run');
+  const scanned = await PDFDocument.load(await download(() => page.click('.act-save >> nth=0')));
   check(scanned.getPageCount() === 2, 'scanner makes a 2-page PDF from 2 photos');
 
   // Fill & Sign: fill a form field and stamp text by clicking the page.
@@ -184,8 +184,8 @@ try {
   await page.click('button:has-text("Add text")');
   await page.waitForSelector('canvas.pdfpage');
   await page.click('canvas.pdfpage', { position: { x: 100, y: 300 } });
-  await page.click('button.primary:has-text("Start")');
-  const signed = await PDFDocument.load(await download(() => page.click('text=Download')));
+  await page.click('#run');
+  const signed = await PDFDocument.load(await download(() => page.click('.act-save >> nth=0')));
   check(signed.getForm().getTextField('full_name').getText() === 'Sita Sharma', 'fill & sign fills the field');
 
   await page.goto(`${origin}/#/protect`);
@@ -193,8 +193,8 @@ try {
   await page.waitForSelector('#pw');
   await page.fill('#pw', 'secret-123');
   await page.fill('#pw2', 'secret-123');
-  await page.click('text=Start');
-  const locked = await download(() => page.click('text=Download'));
+  await page.click('#run');
+  const locked = await download(() => page.click('.act-save >> nth=0'));
   const lockedDoc = await PDFDocument.load(locked, { ignoreEncryption: true });
   check(lockedDoc.isEncrypted && /\/AESV3/.test(Buffer.from(locked).toString('latin1')), 'protect encrypts with AES-256');
 
@@ -216,14 +216,14 @@ try {
   await page.fill('#noteText', 'Check this');
   await page.click('text=Add note');
   await page.click('text=Save annotated copy');
-  const annotated = await PDFDocument.load(await download(() => page.click('text=Download')));
+  const annotated = await PDFDocument.load(await download(() => page.click('.act-save >> nth=0')));
   check(annotated.getPage(0).node.Annots()?.size() === 2, 'reader saves a highlight and a note');
 
   // Library: keep a result, find it by search, file it in a new folder, favorite it.
   await page.goto(`${origin}/#/split`);
   await page.setInputFiles('input[type=file]', await makePdf(2, 'Keepme'));
   await page.fill('#range', '1');
-  await page.click('text=Start');
+  await page.click('#run');
   await page.click('text=Keep in Library');
   await page.waitForSelector('text=Kept in Library');
   await page.goto(`${origin}/#/library`);
@@ -235,7 +235,9 @@ try {
   await page.click('form.namer >> text=Save');
   await page.waitForSelector('.chipbtn.on >> text=Bills');
   await page.click('.chipbtn >> text=All');
-  await page.selectOption('.lib-item select', { label: 'Bills' });
+  await page.click('.lib-item .more');
+  await page.selectOption('.sheet .move-select', { label: 'Bills' });
+  await page.waitForSelector('.sheet', { state: 'detached' });
   await page.locator('.lib-item .star').click();
   await page.click('.chipbtn >> text=Favorites');
   await page.waitForSelector('.lib-item');

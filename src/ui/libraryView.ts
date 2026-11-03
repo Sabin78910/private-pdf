@@ -46,40 +46,50 @@ export function libraryView(): HTMLElement {
     input.focus();
   };
 
-  const row = (it: LibraryItem) => {
-    const open = async () => {
-      const f = await store.readItem(it);
-      window.open(previewUrl(f), '_blank', 'noopener');
-    };
-    const move = h('select', { 'aria-label': `${t('moveTo')}: ${it.name}`, class: 'small-select',
-      onchange: async () => (await store.updateItem({ ...it, folder: move.value || null }), void refresh()) },
+  const sheetFor = (it: LibraryItem) => {
+    const scrim = h('div', { class: 'scrim', onclick: () => close() });
+    const close = () => (scrim.remove(), sheet.remove());
+    const act = (ico: Parameters<typeof icon>[0], label: string, fn: () => unknown, cls = '') =>
+      h('button', { class: `rowi plain ${cls}`, style: 'width:100%', onclick: async () => (close(), await fn()) },
+        h('span', { class: 'setico' }, icon(ico, 20)), h('span', { class: 'grow t' }, label));
+    const move = h('select', { 'aria-label': t('moveTo'), class: 'move-select',
+      onchange: async () => (await store.updateItem({ ...it, folder: move.value || null }), close(), void refresh()) },
       h('option', { value: '', selected: !it.folder }, t('topLevel')),
       folders.map((f) => h('option', { value: f.id, selected: it.folder === f.id }, f.name)));
+    const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-label': it.name },
+      h('h3', {}, it.name),
+      it.mime === 'application/pdf' ? act('reader', t('read'), () => (location.hash = `#/reader?lib=${encodeURIComponent(it.id)}`)) : null,
+      act('eye', t('open'), async () => window.open(previewUrl(await store.readItem(it)), '_blank', 'noopener')),
+      canShare() ? act('share', t('share'), async () => shareFile(await store.readItem(it)).catch(() => {})) : null,
+      act('download', t('saveDevice'), async () => saveFile(await store.readItem(it, false))),
+      h('label', { class: 'field', style: 'margin:8px 0' }, h('span', { class: 'lbl' }, t('moveTo')), move),
+      act('trash', t('delete'), async () => {
+        if (!confirm(t('deleteFileConfirm', { name: it.name }))) return;
+        await store.removeItem(it.id);
+        announce(t('delete'));
+        await refresh();
+      }, 'danger'));
+    document.body.append(scrim, sheet);
+    (sheet.querySelector('button') as HTMLElement | null)?.focus();
+  };
+
+  const row = (it: LibraryItem) => {
+    const pdf = it.mime === 'application/pdf';
     const when = new Date(it.addedAt).toLocaleDateString(lang() === 'ne' ? 'ne-NP' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     return h('li', { class: 'lib-item' },
-      h('span', { class: 'ico' }, icon('file')),
-      h('div', { class: 'grow' }, h('strong', { class: 'name' }, it.name), h('div', { class: 'muted small' }, `${formatBytes(it.size)} · ${when}`)),
-      h('div', { class: 'row wrap lib-actions' },
-        h('button', { class: `icon-btn star${it.favorite ? ' on' : ''}`, 'aria-pressed': it.favorite ? 'true' : 'false', 'aria-label': `${t('favorite')}: ${it.name}`,
-          onclick: async () => (await store.updateItem({ ...it, favorite: !it.favorite }), void refresh()) }, icon('star', 18)),
-        it.mime === 'application/pdf' ? h('a', { class: 'btn small', href: `#/reader?lib=${encodeURIComponent(it.id)}` }, t('read')) : null,
-        h('button', { class: 'btn small', onclick: open }, t('open')),
-        canShare() ? h('button', { class: 'btn small', onclick: async () => shareFile(await store.readItem(it)).catch(() => {}) }, t('share')) : null,
-        h('button', { class: 'btn small', onclick: async () => saveFile(await store.readItem(it, false)) }, t('download')),
-        move,
-        h('button', { class: 'icon-btn', 'aria-label': `${t('delete')}: ${it.name}`, onclick: async () => {
-          if (!confirm(t('deleteFileConfirm', { name: it.name }))) return;
-          await store.removeItem(it.id);
-          announce(t('delete'));
-          await refresh();
-        } }, icon('trash', 18))));
+      h('a', { class: 'open', href: pdf ? `#/reader?lib=${encodeURIComponent(it.id)}` : '#/library', onclick: (e: Event) => { if (!pdf) { e.preventDefault(); sheetFor(it); } } },
+        h('span', { class: `thumb-doc${pdf ? '' : ' img'}` }, icon(pdf ? 'file' : 'toimage', 20)),
+        h('span', { class: 'grow' }, h('span', { class: 'name' }, it.name), h('span', { class: 'muted small' }, `${formatBytes(it.size)} · ${when}`))),
+      h('button', { class: `icon-btn star${it.favorite ? ' on' : ''}`, 'aria-pressed': it.favorite ? 'true' : 'false', 'aria-label': `${t('favorite')}: ${it.name}`,
+        onclick: async () => (await store.updateItem({ ...it, favorite: !it.favorite }), void refresh()) }, icon('star', 20)),
+      h('button', { class: 'icon-btn more', 'aria-label': `${t('moreActions')}: ${it.name}`, onclick: () => sheetFor(it) }, icon('dots', 22)));
   };
 
   async function refresh() {
     try {
       [items, folders] = await Promise.all([store.listItems(), store.listFolders()]);
     } catch {
-      clear(main, h('h2', {}, t('library')), h('p', { class: 'warn' }, t('libUnavailable')));
+      clear(main, h('div', { class: 'largetitle' }, h('h1', {}, t('library'))), h('p', { class: 'warn' }, t('libUnavailable')));
       return;
     }
     if (view.kind === 'folder' && !folders.some((f) => view.kind === 'folder' && f.id === view.id)) view = { kind: 'all' };
@@ -106,7 +116,7 @@ export function libraryView(): HTMLElement {
     clear(list, folderTools,
       shown.length
         ? h('ul', { class: 'list' }, shown.map(row))
-        : h('div', { class: 'empty' }, h('span', { class: 'ico' }, icon('library', 28)), h('p', {}, t(items.length ? 'libNoMatch' : 'libEmpty'))));
+        : h('div', { class: 'card empty-row' }, t(items.length ? 'libNoMatch' : 'libEmpty')));
   }
 
   const picker = filePicker({ accept: 'application/pdf,.pdf', multiple: true, label: 'addToLibrary', onFiles: async (fs) => {
@@ -116,10 +126,9 @@ export function libraryView(): HTMLElement {
   } });
 
   clear(main,
-    h('div', { class: 'toolhead' }, h('span', { class: 'ico' }, icon('library')),
-      h('div', {}, h('h2', {}, t('library')), h('p', {}, t('libraryNote')))),
-    h('div', { class: 'searchbox' }, icon('search', 18), search),
-    chips, folderBar, list, h('div', { class: 'lib-add' }, picker));
+    h('div', { class: 'largetitle' }, h('h1', {}, t('library')), h('p', {}, icon('shield', 16), t('libraryNote'))),
+    h('div', { class: 'lib-tools' }, h('label', { class: 'searchbox' }, icon('search', 20), search), chips),
+    folderBar, list, h('div', { class: 'lib-add' }, picker));
   void refresh();
   return main;
 }
@@ -127,7 +136,7 @@ export function libraryView(): HTMLElement {
 /** "Keep in Library" button for a result card. */
 export function keepButton(file: { name: string; bytes: Uint8Array; mime: string }, source: string): HTMLElement | null {
   if (!store.libraryAvailable()) return null;
-  const btn = h('button', { class: 'btn', onclick: async () => {
+  const btn = h('button', { class: 'btn keep', onclick: async () => {
     btn.disabled = true;
     try {
       await store.addFile(file, source);

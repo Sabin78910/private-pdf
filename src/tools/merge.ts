@@ -8,7 +8,7 @@ export function mergeTool(root: HTMLElement) {
   let files: File[] = [];
   const list = h('ol', { class: 'list' });
   const runner = new Runner('merge');
-  const startBtn = h('button', { class: 'btn primary', disabled: true, onclick: () => start() }, t('start'));
+  const startBtn = h('button', { class: 'btn primary run', id: 'run', disabled: true, onclick: () => start() }, t('action.merge'));
 
   const draw = () => {
     clear(

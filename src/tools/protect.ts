@@ -27,7 +27,7 @@ export function protectTool(root: HTMLElement) {
       h('label', { class: 'row' }, show, t('showPassword')),
       h('p', { class: 'muted small' }, t('protectWarn')),
       problem,
-      h('button', { class: 'btn primary', onclick: () => start() }, t('start')),
+      h('button', { class: 'btn primary run', id: 'run', onclick: () => start() }, t('action.protect')),
     );
   };
 
