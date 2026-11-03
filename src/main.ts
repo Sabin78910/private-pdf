@@ -28,6 +28,7 @@ import { libraryView } from './ui/libraryView';
 import { icon, type IconName } from './ui/icons';
 import { greeting, matchTool, QUICK_TOOLS, resolveTheme, TOOL_GROUPS, toolHue, type Theme } from './core/theme';
 import { allKeys } from './i18n';
+import welcomeArt from './assets/welcome.webp';
 
 const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }[] = [
   { id: 'compress', icon: 'compress', render: compressTool },
@@ -148,6 +149,31 @@ function fileRow(it: LibraryItem) {
     h('span', { class: 'end' }, icon('chevron', 18))));
 }
 
+const WELCOME_KEY = 'pdfapp.welcomed';
+
+/** First-launch card; hidden for good once dismissed. */
+function welcomeCard() {
+  try {
+    if (localStorage.getItem(WELCOME_KEY) === '1') return null;
+  } catch {
+    /* storage blocked: show it, dismissing still hides it for this visit */
+  }
+  const card = h('section', { class: 'card welcome', 'aria-labelledby': 'welcomeTitle' },
+    h('img', { class: 'art', src: welcomeArt, alt: '', width: 560, height: 431, decoding: 'async' }),
+    h('h2', { id: 'welcomeTitle' }, t('welcome.title')),
+    h('p', {}, t('welcome.body')),
+    h('button', { class: 'btn primary', id: 'welcomeOk', onclick: () => {
+      try {
+        localStorage.setItem(WELCOME_KEY, '1');
+      } catch {
+        /* ignore */
+      }
+      card.remove();
+      document.getElementById('homeSearch')?.focus();
+    } }, t('welcome.ok')));
+  return card;
+}
+
 function home() {
   const results = h('div');
   const sections = h('div');
@@ -185,6 +211,7 @@ function home() {
   return h('main', {},
     h('div', { class: 'largetitle' }, h('h1', {}, t(`greet.${greeting(new Date().getHours())}` as Key)),
       h('p', {}, icon('shield', 16), t('homeSub'))),
+    welcomeCard(),
     h('label', { class: 'searchbox' }, icon('search', 20), search),
     sections, results,
     h('p', { class: 'trust' }, icon('lock', 16), t('aboutBody')));

@@ -38,6 +38,13 @@ async function download(trigger) {
 }
 
 try {
+  await page.goto(`${origin}/#/`);
+  await page.waitForSelector('.welcome img');
+  await page.click('#welcomeOk');
+  await page.reload();
+  await page.waitForSelector('#homeSearch');
+  check(!(await page.locator('.welcome').count()), 'welcome card shows once and stays dismissed');
+
   await page.goto(`${origin}/#/merge`);
   await page.setInputFiles('input[type=file]', [await makePdf(2, 'A'), await makePdf(3, 'B')]);
   await page.click('#run');
