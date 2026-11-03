@@ -91,3 +91,5 @@ h2 { margin: 8px 0; }
 .prose { max-width: 70ch; }
 fieldset { border: 1px solid var(--line); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.avatar { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border-radius: 50%; background: var(--brand); color: var(--brand-ink); font-weight: 700; }
+.gbtn { min-height: 44px; margin: 12px 0; }

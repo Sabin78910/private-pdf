@@ -3,6 +3,8 @@ import { h, clear } from './ui/dom';
 import { initLang, lang, setLang, t, type Key } from './i18n';
 import { history, isNative } from './platform/files';
 import { formatBytes } from './core/history';
+import { initials } from './core/auth';
+import { currentAccount, signIn, signInEnabled, signOut } from './platform/auth';
 import { mergeTool } from './tools/merge';
 import { splitTool } from './tools/split';
 import { compressTool } from './tools/compress';
@@ -31,7 +33,40 @@ function header() {
     h('nav', { class: 'row' },
       h('a', { href: '#/history' }, t('history')),
       h('a', { href: '#/privacy' }, t('privacy')),
+      signInEnabled() ? accountLink() : null,
       h('button', { class: 'btn small', lang: lang() === 'en' ? 'ne' : 'en', onclick: () => (setLang(lang() === 'en' ? 'ne' : 'en'), route()) }, t('language'))));
+}
+
+function accountLink() {
+  const a = currentAccount();
+  return a
+    ? h('a', { href: '#/account', class: 'avatar', title: a.email, 'aria-label': t('signedInAs', { name: a.name }) }, initials(a))
+    : h('a', { href: '#/account' }, t('signIn'));
+}
+
+function accountView() {
+  const a = currentAccount();
+  const host = h('div', { class: 'gbtn' });
+  const status = h('p', { role: 'status' });
+  if (a) {
+    return h('main', { class: 'prose' },
+      h('h2', {}, t('account')),
+      h('p', {}, h('strong', {}, a.name), h('br'), h('span', { class: 'muted' }, a.email)),
+      h('p', { class: 'muted' }, t('signInData')),
+      h('button', { class: 'btn', onclick: async () => (await signOut(), route()) }, t('signOut')));
+  }
+  const start = h('button', { class: 'btn primary', onclick: () => {
+    start.disabled = true;
+    signIn(host, lang())
+      .then(() => ((location.hash = '#/'), route()))
+      .catch(() => ((status.textContent = t('signInFailed')), (start.disabled = false)));
+  } }, 'G  ', t('signIn'));
+  host.append(start);
+  return h('main', { class: 'prose' },
+    h('h2', {}, t('account')),
+    h('p', {}, t('signInWhy')),
+    h('p', { class: 'muted' }, t('signInData')),
+    host, status);
 }
 
 function home() {
@@ -77,6 +112,7 @@ function route() {
     tool.render(body);
   } else if (id === 'history') main = historyView();
   else if (id === 'privacy') main = privacyView();
+  else if (id === 'account' && signInEnabled()) main = accountView();
   else main = home();
   clear(app, header(), main, h('div', { id: 'live', class: 'visually-hidden', 'aria-live': 'polite' }));
   main.querySelector('h2')?.setAttribute('tabindex', '-1');
@@ -96,13 +132,17 @@ on the web it is kept for the current browser session only. You can clear it at 
 <li>Your language choice.</li>
 </ul>
 <h3>Network</h3>
-<p>The app's security policy blocks connections to any other server. OCR language data for Nepali and
+<p>The app's security policy blocks connections to any other server, except Google's sign-in service when you choose to sign in. OCR language data for Nepali and
 English is bundled with the app, so OCR works offline. On the web, the page itself is downloaded from our
 host like any website; your documents are not sent with it.</p>
 <h3>Permissions (Android)</h3>
 <ul><li>Camera: only when you choose “Take photo” in the scanner or OCR.</li>
 <li>Files: only the files you pick, and saving results to Documents/PrivatePDF.</li></ul>
 <h3>Sharing</h3><p>Files leave your device only when you tap Share and choose an app yourself.</p>
+<h3>Optional Google sign-in</h3><p>You never need an account. If you choose to sign in with Google, Google
+shares your name and email with the app; they are stored only on your device so we can show who is signed in.
+Signing in contacts Google only. Your documents are never uploaded, whether you are signed in or not. Sign out at
+any time from the Account page.</p>
 <h3>Future AI features</h3><p>Any feature that needs cloud processing will be off by default, clearly labelled,
 and will ask for your explicit consent first.</p>`;
 
@@ -123,6 +163,9 @@ const PRIVACY_NE = `
 <ul><li>क्यामेरा: स्क्यानर वा OCR मा “फोटो खिच्नुहोस्” रोज्दा मात्र।</li>
 <li>फाइल: तपाईंले छानेका फाइल मात्र, र नतिजा Documents/PrivatePDF मा सेभ गर्न।</li></ul>
 <h3>सेयर</h3><p>तपाईंले सेयर थिचेर आफैं एप रोज्दा मात्र फाइल बाहिर जान्छ।</p>
+<h3>ऐच्छिक Google साइन इन</h3><p>खाता कहिल्यै अनिवार्य छैन। Google बाट साइन इन गर्नुभयो भने Google ले तपाईंको नाम र इमेल एपलाई दिन्छ;
+ती तपाईंको उपकरणमा मात्र राखिन्छन्। साइन इनले Google सँग मात्र सम्पर्क गर्छ। साइन इन गरे पनि नगरे पनि तपाईंका कागजात कहिल्यै
+अपलोड हुँदैनन्। खाता पानाबाट जुनसुकै बेला साइन आउट गर्न सकिन्छ।</p>
 <h3>भविष्यका AI सुविधा</h3><p>क्लाउड चाहिने कुनै पनि सुविधा सुरुमा बन्द रहनेछ, स्पष्ट लेखिनेछ र तपाईंको स्पष्ट सहमति माग्नेछ।</p>`;
 
 initLang();

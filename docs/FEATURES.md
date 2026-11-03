@@ -3,7 +3,8 @@
 Shared rules for every tool:
 
 - **Data.** Files are read into memory on the device. Nothing is uploaded; the Content-Security-Policy
-  (`connect-src 'self'`) blocks any other server, and the Android app has no INTERNET permission.
+  blocks any other server except Google's sign-in service, which loads only if the user taps
+  *Sign in*. Sign-in is optional; on Android, INTERNET is used only for it.
   Results are new files (`name-compressed.pdf`, `name-signed.pdf`, …). The original is never changed.
 - **Errors.** Every failure maps to an actionable message in English and Nepali: password protected,
   damaged / not a PDF, empty, bad page range, unsupported image, out of memory, cancelled. Each offers
@@ -25,6 +26,7 @@ Shared rules for every tool:
 | Organize | Reorder, rotate, delete, duplicate, insert blank | 1 PDF; thumbnails with buttons (touch/keyboard) and drag-drop (desktop) | `-organized.pdf` | Thumbnails render lazily; deleting the last page is blocked |
 | Fill & Sign | Complete and sign government, bank, school forms | 1 PDF; form fields, text stamps, drawn signature (finger / stylus / mouse) | `-signed.pdf`, optional lock (flatten) | Nepali text is placed as a correctly shaped image stamp; Nepali in form fields is explained (v1.1) |
 | PDF to Image | Share pages on WhatsApp / social | 1 PDF; JPG/PNG; 72/150/300 dpi; optional range | Image, or `.zip` of images | One page in memory at a time |
+| Google sign-in (optional) | Show who is using the app; groundwork for later sync | Google account | Name + email stored on device | Not required for any tool; offline or failed sign-in shows a message and tools keep working |
 | History | Find what you did | — | List of tool, file name, size, time | Android: on device; Web: this browser session only. Clearable |
 
 ## Known limits for 1.0 (tracked for 1.1)

@@ -51,3 +51,18 @@ download from the workflow run, so no local Android setup is needed.
 
 Signing keys are never committed. Create an upload keystore, store it as a CI secret, and add a
 release job that runs `./gradlew bundleRelease`. See docs/FEATURES.md for the pre-release device test plan.
+
+## Optional Google sign-in
+
+Sign-in is optional and hidden until a client ID is set. Tools never need it and documents are never
+uploaded. To switch it on:
+
+1. In [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials), create an
+   **OAuth client ID** of type **Web application**. Add your web URL (e.g. `https://your-site.example`) under
+   *Authorized JavaScript origins*.
+2. For Android, also create an **Android** OAuth client ID with package `app.privatepdf.mobile` and the
+   SHA-1 of your signing key (debug and Play App Signing keys each need one).
+3. Put the **Web** client ID in the GitHub repository variable `GOOGLE_CLIENT_ID`
+   (Settings → Secrets and variables → Actions → Variables). Locally: `VITE_GOOGLE_CLIENT_ID=... npm run build`.
+
+The client ID is public (it ships in the page), so it is a variable, not a secret.
