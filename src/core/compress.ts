@@ -37,6 +37,19 @@ export function summarize(originalSize: number, bytes: Uint8Array): CompressResu
   return { bytes, originalSize, compressedSize, savedPercent, notSmaller: compressedSize >= originalSize };
 }
 
+/** Per-page overhead of a raster page (page dict, image XObject, content stream), in bytes. */
+export const RASTER_PAGE_OVERHEAD = 600;
+
+/**
+ * Estimates the Medium / High output size from sample pages already rendered for the preview.
+ * Returns null when there is nothing to estimate from.
+ */
+export function estimateRasterSize(sampleJpegSizes: number[], pageCount: number): number | null {
+  if (!sampleJpegSizes.length || pageCount < 1) return null;
+  const avg = sampleJpegSizes.reduce((a, b) => a + b, 0) / sampleJpegSizes.length;
+  return Math.round((avg + RASTER_PAGE_OVERHEAD) * pageCount + 1024);
+}
+
 /** Lossless: rewrite with object streams and drop unused objects and metadata bloat. */
 export async function compressLossless(bytes: Uint8Array): Promise<CompressResult> {
   const doc = await loadPdf(bytes);

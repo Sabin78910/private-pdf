@@ -191,3 +191,12 @@ describe('history', () => {
     expect(formatBytes(10 * 1024 * 1024)).toBe('10.0 MB');
   });
 });
+
+describe('compress estimate', async () => {
+  const { estimateRasterSize, RASTER_PAGE_OVERHEAD } = await import('../src/core/compress');
+  it('scales the sampled page size by the page count', () => {
+    expect(estimateRasterSize([], 3)).toBeNull();
+    expect(estimateRasterSize([1000], 0)).toBeNull();
+    expect(estimateRasterSize([1000, 3000], 10)).toBe((2000 + RASTER_PAGE_OVERHEAD) * 10 + 1024);
+  });
+});
