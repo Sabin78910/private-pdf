@@ -80,7 +80,7 @@ export function compressTool(root: HTMLElement) {
       select('level', [['low', 'level.low'], ['medium', 'level.medium'], ['high', 'level.high']], level, (v) => ((level = v), draw(), void renderPreview())),
       level !== 'low' ? h('p', { class: 'muted small' }, t('rasterNote')) : null,
       preview,
-      h('button', { class: 'btn primary', onclick: () => start() }, t('start')),
+      h('button', { class: 'btn primary run', id: 'run', onclick: () => start() }, t('action.compress')),
     );
   };
 

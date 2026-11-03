@@ -31,7 +31,7 @@ export function pageNumbersTool(root: HTMLElement) {
       h('label', { class: 'row' },
         h('input', { type: 'checkbox', checked: skipFirst, onchange: (e: Event) => (skipFirst = (e.target as HTMLInputElement).checked) }),
         t('numSkipFirst')),
-      h('button', { class: 'btn primary', onclick: () => start() }, t('start')),
+      h('button', { class: 'btn primary run', id: 'run', onclick: () => start() }, t('action.numbers')),
     );
   };
 

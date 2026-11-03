@@ -187,7 +187,7 @@ export function signTool(root: HTMLElement) {
       hint,
       pageHost,
       placedList,
-      h('button', { class: 'btn primary', onclick: () => start() }, t('start')),
+      h('button', { class: 'btn primary run', id: 'run', onclick: () => start() }, t('action.sign')),
     );
     void renderCurrent();
   };

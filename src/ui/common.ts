@@ -28,8 +28,11 @@ export function filePicker(opts: {
     'label',
     { class: 'drop' },
     input,
-    h('span', { class: 'btn primary' }, t(opts.label)),
-    h('span', { class: 'muted' }, t('dropHere')),
+    h('span', { class: 'chipico' }, icon(opts.accept.includes('image') && !opts.accept.includes('pdf') ? 'toimage' : 'upload', 30)),
+    h('strong', {}, t(opts.label)),
+    h('span', { class: 'hint' }, t('pickHint')),
+    h('span', { class: 'btn primary' }, t('browseFiles')),
+    h('span', { class: 'dz' }, t('dropHere')),
   );
   zone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -135,19 +138,22 @@ export class Runner {
   success(files: OutputFile[], extra?: Node) {
     announce(t('done'));
     const cards = files.map((f) => {
-      const actions = [
-        h('button', { class: 'btn primary', onclick: () => saveFile(f) }, t('download')),
-        canShare() ? h('button', { class: 'btn', onclick: () => shareFile(f).catch(() => {}) }, t('share')) : null,
-        f.mime === 'application/pdf' || f.mime.startsWith('image/')
-          ? h('a', { class: 'btn', href: previewUrl(f), target: '_blank', rel: 'noopener' }, t('open'))
-          : null,
-        keepButton(f, this.tool),
-      ];
-      return h('div', { class: 'result' }, h('div', {}, h('strong', {}, f.name), h('div', { class: 'muted' }, formatBytes(f.bytes.length))), h('div', { class: 'row wrap' }, actions));
+      const pdf = f.mime === 'application/pdf';
+      const viewable = pdf || f.mime.startsWith('image/');
+      return h('div', { class: 'result' },
+        h('div', { class: 'fhead' },
+          h('span', { class: `thumb-doc${pdf ? '' : ' img'}` }, icon(pdf ? 'file' : f.mime === 'application/zip' ? 'folder' : 'toimage', 20)),
+          h('div', { class: 'grow' }, h('strong', {}, f.name), h('span', { class: 'muted small' }, formatBytes(f.bytes.length)))),
+        h('div', { class: 'acts' },
+          h('button', { class: 'btn primary act-save', onclick: () => saveFile(f).then(() => toast(t('done'))).catch(() => {}) }, icon('download', 18), t('saveDevice')),
+          canShare() ? h('button', { class: 'icon-btn btn', 'aria-label': t('share'), title: t('share'), onclick: () => shareFile(f).catch(() => {}) }, icon('share', 20)) : null,
+          viewable ? h('a', { class: 'icon-btn btn', href: previewUrl(f), target: '_blank', rel: 'noopener', 'aria-label': t('open'), title: t('open') }, icon('eye', 20)) : null,
+          keepButton(f, this.tool)));
     });
     const tick = h('span', { class: 'tick', 'aria-hidden': 'true' });
-    tick.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9"/></svg>';
-    clear(this.el, h('div', { class: 'card ok pop' }, h('h3', { class: 'row' }, tick, t('done')), extra ?? null, cards, h('p', { class: 'muted small' }, t('originalSafe'))));
+    tick.innerHTML = '<svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9"/></svg>';
+    clear(this.el, h('div', { class: 'card ok pop success' }, tick, h('h3', {}, t('done')), h('p', { class: 'sub' }, t('doneSub')), extra ?? null, cards));
+    this.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   fail(e: unknown, retry: () => void) {
@@ -187,13 +193,26 @@ export function fileChip(name: string, size: number, actions: Node[] = []) {
 export const isPdfFile = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
 export const isImageFile = (f: File) => /^image\/(jpeg|png|webp|heic|heif)$/.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name);
 
-export function select<T extends string>(label: Key, options: [T, Key][], value: T, onChange: (v: T) => void) {
-  const id = `s-${Math.random().toString(36).slice(2)}`;
-  return h(
-    'div',
-    { class: 'field' },
-    h('label', { for: id }, t(label)),
-    h('select', { id, onchange: (e: Event) => onChange((e.target as HTMLSelectElement).value as T) },
-      options.map(([v, k]) => h('option', { value: v, selected: v === value }, t(k)))),
-  );
+/** Choice control: a segmented control for short labels, option cards for labels with a note in brackets. */
+export function select<T extends string>(label: Key, options: [T, Key | { text: string }][], value: T, onChange: (v: T) => void) {
+  const name = `o-${label}-${Math.random().toString(36).slice(2, 7)}`;
+  const parts = options.map(([v, k]) => {
+    const text = typeof k === 'string' ? t(k) : k.text;
+    const m = /^(.*?)\s*\((.*)\)\s*$/.exec(text);
+    return { v, title: m ? m[1] : text, desc: m ? m[2] : '' };
+  });
+  const seg = parts.length <= 4 && parts.every((p) => !p.desc && [...p.title].length <= 14);
+  return h('div', { class: 'optgroup field', role: 'radiogroup', 'aria-label': t(label) },
+    h('span', { class: 'lbl' }, t(label)),
+    h('div', { class: `opts${seg ? ' seg' : ''}` }, parts.map((p) => h('label', { class: 'opt' },
+      h('input', { type: 'radio', name, value: p.v, checked: p.v === value, onchange: () => onChange(p.v) }),
+      h('span', {}, h('span', { class: 'o-t' }, p.title), p.desc ? h('span', { class: 'o-d' }, p.desc) : null)))));
+}
+
+/** Small confirmation that floats above the tab bar for two seconds. */
+export function toast(msg: string) {
+  document.querySelector('.toast')?.remove();
+  const el = h('div', { class: 'toast', role: 'status' }, msg);
+  document.body.append(el);
+  setTimeout(() => el.remove(), 2000);
 }
