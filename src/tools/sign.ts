@@ -1,4 +1,5 @@
 import { h, clear } from '../ui/dom';
+import { icon } from '../ui/icons';
 import { t } from '../i18n';
 import { Runner, filePicker, isPdfFile } from '../ui/common';
 import { readFile } from '../platform/files';
@@ -181,7 +182,7 @@ export function signTool(root: HTMLElement) {
           pending = { kind: 'signature', png: await canvasToBytes(c, 'image/png'), preview: c, width, height: (c.height / c.width) * width };
           clear(sigHost);
           hint.textContent = t('place');
-        })) }, '✍ ', t('addSignature'))),
+        })) }, icon('sign', 18), t('addSignature'))),
       sigHost,
       hint,
       pageHost,

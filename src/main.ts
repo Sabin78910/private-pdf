@@ -15,30 +15,71 @@ import { signTool } from './tools/sign';
 import { toImageTool } from './tools/toimage';
 import { pageNumbersTool } from './tools/pagenumbers';
 import { watermarkTool } from './tools/watermark';
+import { icon, type IconName } from './ui/icons';
+import { otherTheme, resolveTheme, TOOL_GROUPS, type Theme } from './core/theme';
 
-const TOOLS: { id: string; icon: string; render: (root: HTMLElement) => void }[] = [
-  { id: 'compress', icon: '🗜️', render: compressTool },
-  { id: 'merge', icon: '➕', render: mergeTool },
-  { id: 'split', icon: '✂️', render: splitTool },
-  { id: 'scan', icon: '📷', render: scanTool },
-  { id: 'ocr', icon: '🔤', render: ocrTool },
-  { id: 'organize', icon: '🗂️', render: organizeTool },
-  { id: 'sign', icon: '✍️', render: signTool },
-  { id: 'toimage', icon: '🖼️', render: toImageTool },
-  { id: 'numbers', icon: '🔢', render: pageNumbersTool },
-  { id: 'watermark', icon: '💧', render: watermarkTool },
+const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }[] = [
+  { id: 'compress', icon: 'compress', render: compressTool },
+  { id: 'merge', icon: 'merge', render: mergeTool },
+  { id: 'split', icon: 'split', render: splitTool },
+  { id: 'scan', icon: 'scan', render: scanTool },
+  { id: 'ocr', icon: 'ocr', render: ocrTool },
+  { id: 'organize', icon: 'organize', render: organizeTool },
+  { id: 'sign', icon: 'sign', render: signTool },
+  { id: 'toimage', icon: 'toimage', render: toImageTool },
+  { id: 'numbers', icon: 'numbers', render: pageNumbersTool },
+  { id: 'watermark', icon: 'watermark', render: watermarkTool },
 ];
 
 const app = document.getElementById('app')!;
 
-function header() {
+let theme: Theme = 'dark';
+function applyTheme(next: Theme) {
+  theme = next;
+  document.documentElement.dataset.theme = next;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0a0f1e' : '#f4f6fb');
+  try {
+    localStorage.setItem('pdfapp.theme', next);
+  } catch {
+    /* ignore */
+  }
+}
+function initTheme() {
+  let saved: string | null = null;
+  try {
+    saved = localStorage.getItem('pdfapp.theme');
+  } catch {
+    /* ignore */
+  }
+  applyTheme(resolveTheme(saved));
+}
+
+const NAV: { href: string; key: Key; icon: IconName }[] = [
+  { href: '#/', key: 'tools', icon: 'home' },
+  { href: '#/history', key: 'history', icon: 'history' },
+  { href: '#/privacy', key: 'privacy', icon: 'shield' },
+];
+const isCurrent = (href: string, id: string) => (href === '#/' ? id === '' : href === `#/${id}`);
+
+function header(id: string) {
+  const themeLabel = t(theme === 'dark' ? 'theme.light' : 'theme.dark');
   return h('header', { class: 'top' },
-    h('a', { href: '#/', class: 'brand' }, h('span', { 'aria-hidden': 'true' }, '🔒 '), t('appName')),
-    h('nav', { class: 'row' },
-      h('a', { href: '#/history' }, t('history')),
-      h('a', { href: '#/privacy' }, t('privacy')),
+    h('a', { href: '#/', class: 'brand' }, h('span', { class: 'mark' }, icon('logo', 20)), t('appName')),
+    h('nav', { class: 'links' },
+      NAV.map((n) => h('a', { href: n.href, class: 'tab', 'aria-current': isCurrent(n.href, id) ? 'page' : null }, t(n.key))),
       signInEnabled() ? accountLink() : null,
+      h('button', { class: 'icon-btn', 'aria-label': themeLabel, title: themeLabel, onclick: () => (applyTheme(otherTheme(theme)), route()) },
+        icon(theme === 'dark' ? 'sun' : 'moon', 20)),
       h('button', { class: 'btn small', lang: lang() === 'en' ? 'ne' : 'en', onclick: () => (setLang(lang() === 'en' ? 'ne' : 'en'), route()) }, t('language'))));
+}
+
+function tabbar(id: string) {
+  return h('nav', { class: 'tabbar', 'aria-label': t('tools') },
+    NAV.map((n) => h('a', { href: n.href, 'aria-current': isCurrent(n.href, id) ? 'page' : null }, icon(n.icon, 22), t(n.key))));
+}
+
+function deviceBadge() {
+  return h('p', { class: 'badge' }, h('span', { class: 'dot', 'aria-hidden': 'true' }), t('privacyBadge'));
 }
 
 function accountLink() {
@@ -73,16 +114,27 @@ function accountView() {
     host, status);
 }
 
+function toolCard(id: string) {
+  const tool = TOOLS.find((x) => x.id === id)!;
+  return h('li', {}, h('a', { class: 'tile', href: `#/${tool.id}` },
+    h('span', { class: 'ico' }, icon(tool.icon)),
+    h('span', {}, h('strong', {}, t(`tool.${tool.id}` as Key)), h('span', { class: 'muted small' }, t(`tool.${tool.id}.desc` as Key))),
+    h('span', { class: 'go' }, icon('chevron', 18))));
+}
+
 function home() {
   return h('main', {},
-    h('p', { class: 'lead' }, t('tagline')),
-    h('p', { class: 'badge' }, '🛡️ ', t('privacyBadge')),
-    h('ul', { class: 'grid' },
-      TOOLS.map((tool) =>
-        h('li', {}, h('a', { class: 'tile', href: `#/${tool.id}` },
-          h('span', { class: 'ico', 'aria-hidden': 'true' }, tool.icon),
-          h('strong', {}, t(`tool.${tool.id}` as Key)),
-          h('span', { class: 'muted small' }, t(`tool.${tool.id}.desc` as Key)))))));
+    h('section', { class: 'hero' },
+      h('h1', {}, t('heroTitle')),
+      h('p', {}, t('heroBody')),
+      h('ul', { class: 'facts' },
+        h('li', {}, icon('device', 16), t('fact.device')),
+        h('li', {}, icon('wifiOff', 16), t('fact.offline')),
+        h('li', {}, icon('lock', 16), t('fact.noAccount')))),
+    TOOL_GROUPS.map((g) => h('section', { class: 'group' },
+      h('h2', {}, t(`group.${g.id}` as Key)),
+      h('ul', { class: 'grid' }, g.tools.filter((id) => TOOLS.some((x) => x.id === id)).map(toolCard)))),
+    h('p', { class: 'foot' }, icon('shield', 16), t('footNote')));
 }
 
 function historyView() {
@@ -94,7 +146,7 @@ function historyView() {
   return h('main', {},
     h('h2', {}, t('history')),
     h('p', { class: 'muted' }, t(isNative() ? 'historyNoteApp' : 'historyNoteWeb')),
-    items.length ? list : h('p', {}, t(isNative() ? 'historyEmptyApp' : 'historyEmptyWeb')),
+    items.length ? list : h('div', { class: 'empty' }, h('span', { class: 'ico' }, icon('history', 28)), h('p', {}, t(isNative() ? 'historyEmptyApp' : 'historyEmptyWeb'))),
     items.length ? h('button', { class: 'btn', onclick: () => (history.clear(), route()) }, t('clearHistory')) : null);
 }
 
@@ -111,16 +163,19 @@ function route() {
   let main: HTMLElement;
   if (tool) {
     const body = h('section', { class: 'tool' });
-    main = h('main', {}, h('a', { href: '#/', class: 'back' }, '← ', t('home')), h('h2', {}, t(`tool.${tool.id}` as Key)),
-      h('p', { class: 'badge' }, '🛡️ ', t('privacyBadge')), body);
+    main = h('main', {}, h('a', { href: '#/', class: 'back' }, icon('back', 18), t('home')),
+      h('div', { class: 'toolhead' }, h('span', { class: 'ico' }, icon(tool.icon)),
+        h('div', {}, h('h2', {}, t(`tool.${tool.id}` as Key)), h('p', {}, t(`tool.${tool.id}.desc` as Key)))),
+      deviceBadge(), body);
     tool.render(body);
   } else if (id === 'history') main = historyView();
   else if (id === 'privacy') main = privacyView();
   else if (id === 'account' && signInEnabled()) main = accountView();
   else main = home();
-  clear(app, header(), main, h('div', { id: 'live', class: 'visually-hidden', 'aria-live': 'polite' }));
-  main.querySelector('h2')?.setAttribute('tabindex', '-1');
-  (main.querySelector('h2') as HTMLElement | null)?.focus();
+  clear(app, header(id), main, tabbar(id), h('div', { id: 'live', class: 'visually-hidden', 'aria-live': 'polite' }));
+  const heading = main.querySelector<HTMLElement>('h1, h2');
+  heading?.setAttribute('tabindex', '-1');
+  heading?.focus();
 }
 
 const PRIVACY_EN = `
@@ -173,5 +228,6 @@ const PRIVACY_NE = `
 <h3>भविष्यका AI सुविधा</h3><p>क्लाउड चाहिने कुनै पनि सुविधा सुरुमा बन्द रहनेछ, स्पष्ट लेखिनेछ र तपाईंको स्पष्ट सहमति माग्नेछ।</p>`;
 
 initLang();
+initTheme();
 window.addEventListener('hashchange', route);
 route();
