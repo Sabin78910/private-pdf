@@ -180,3 +180,20 @@ fieldset { border: 1px solid var(--line); }
 .cmp-tag.r { right: 8px; }
 .cmp-range { width: 100%; max-width: 560px; accent-color: var(--brand); margin: 8px 0 0; }
 .estimate { font-weight: 600; color: var(--brand); margin: 6px 0 0; }
+.searchbox { display: flex; align-items: center; gap: 8px; margin: 16px 0 10px; padding: 0 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--muted); }
+.searchbox input { flex: 1; border: 0; background: transparent; box-shadow: none !important; padding-left: 0; }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: none; }
+.chipbtn { appearance: none; flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+.chipbtn.on { background: color-mix(in srgb, var(--brand) 18%, var(--card)); border-color: var(--brand); color: var(--brand); }
+.chipbtn.add { border-style: dashed; color: var(--muted); }
+.namer { margin: 4px 0 8px; }
+.namer input { flex: 1; min-width: 180px; }
+.folder-tools { margin: 4px 0 8px; }
+.lib-item { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
+.lib-item .name { display: block; overflow-wrap: anywhere; }
+.lib-actions { margin-left: auto; }
+.small-select { min-height: 36px !important; padding: 4px 8px !important; max-width: 150px; }
+.star.on { color: #f5b301; }
+.star.on svg { fill: currentColor; }
+.lib-add { margin: 20px 0 0; display: flex; }
+@media (max-width: 560px) { .lib-actions { margin-left: 56px; } }
