@@ -6,6 +6,7 @@ import { canShare, previewUrl, readFile, saveFile, shareFile } from '../platform
 import { formatBytes } from '../core/history';
 import { checkFolderName, viewItems, type Folder, type LibraryItem, type LibraryView } from '../core/library';
 import * as store from '../platform/libraryStore';
+import emptyArt from '../assets/library-empty.webp';
 
 let view: LibraryView = { kind: 'all' };
 let query = '';
@@ -116,7 +117,10 @@ export function libraryView(): HTMLElement {
     clear(list, folderTools,
       shown.length
         ? h('ul', { class: 'list' }, shown.map(row))
-        : h('div', { class: 'card empty-row' }, t(items.length ? 'libNoMatch' : 'libEmpty')));
+        : items.length
+          ? h('div', { class: 'card empty-row' }, t('libNoMatch'))
+          : h('div', { class: 'card empty-row empty-art' },
+              h('img', { src: emptyArt, alt: '', width: 469, height: 439, decoding: 'async' }), h('p', {}, t('libEmpty'))));
   }
 
   const picker = filePicker({ accept: 'application/pdf,.pdf', multiple: true, label: 'addToLibrary', onFiles: async (fs) => {

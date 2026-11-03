@@ -407,3 +407,13 @@ label.row:has(input[type='checkbox']) { justify-content: space-between; flex-dir
 .row.wrap > .optgroup { flex: 1 1 240px; }
 .row.wrap:has(> .drop) { flex-direction: column; align-items: stretch; }
 .row.wrap:has(> .drop) > label.btn { width: 100%; }
+
+/* Illustrations (made in Canva, backgrounds cut out so they sit on either theme) */
+.welcome { text-align: center; padding: 20px 20px 24px; margin-bottom: 16px; }
+.welcome .art { display: block; width: 100%; max-width: 280px; height: auto; margin: 0 auto 12px; }
+.welcome h2 { font-size: 20px; line-height: 26px; margin: 0 0 6px; }
+.welcome p { color: var(--text-2); margin: 0 auto 16px; max-width: 36ch; }
+.welcome .btn { width: 100%; max-width: 320px; }
+.empty-art { text-align: center; padding: 20px; }
+.empty-art img { display: block; width: 160px; height: auto; margin: 0 auto 12px; }
+.empty-art p { margin: 0; }
