@@ -17,6 +17,7 @@ export type JobRequest =
   | { op: 'fillSign'; bytes: Uint8Array; input: FillSignInput }
   | { op: 'pageNumbers'; bytes: Uint8Array; options: PageNumberOptions }
   | { op: 'watermark'; bytes: Uint8Array; options: WatermarkOptions }
+  | { op: 'protect'; bytes: Uint8Array; password: string }
   | { op: 'pageCount'; bytes: Uint8Array };
 
 export type JobMessage =
