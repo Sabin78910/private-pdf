@@ -1,6 +1,6 @@
 import { h, clear } from '../ui/dom';
 import { t } from '../i18n';
-import { Runner, filePicker, fileChip, isPdfFile, select } from '../ui/common';
+import { Runner, countUp, filePicker, fileChip, isPdfFile, select } from '../ui/common';
 import { readFile } from '../platform/files';
 import { runJob } from '../platform/jobs';
 import { openPdf, rasterizerFor } from '../platform/render';
@@ -8,6 +8,7 @@ import { compressRaster, summarize, type CompressLevel, type CompressResult } fr
 import { formatBytes, outputName } from '../core/history';
 import { PdfError } from '../core/errors';
 import { loadPdf } from '../core/load';
+import { bytesSaved } from '../core/feel';
 
 export function compressTool(root: HTMLElement) {
   let file: File | null = null;
@@ -52,11 +53,12 @@ export function compressTool(root: HTMLElement) {
       },
       (r) => {
         const best = r.notSmaller ? summarize(r.originalSize, r.bytes) : r;
-        const extra = h(
-          'p',
-          { class: r.notSmaller ? 'warn' : '' },
-          r.notSmaller ? t('notSmaller') : t('sizeResult', { orig: formatBytes(best.originalSize), out: formatBytes(best.compressedSize), pct: best.savedPercent }),
-        );
+        const saved = bytesSaved(best.originalSize, best.compressedSize);
+        const extra = r.notSmaller
+          ? h('p', { class: 'warn' }, t('notSmaller'))
+          : h('div', {},
+              h('p', { class: 'saved' }, t('youSaved'), ' ', countUp(saved, formatBytes)),
+              h('p', { class: 'muted' }, t('sizeResult', { orig: formatBytes(best.originalSize), out: formatBytes(best.compressedSize), pct: best.savedPercent })));
         return { files: [{ name: outputName(file!.name, 'compressed'), bytes: r.bytes, mime: 'application/pdf' }], inputs: [file!.name], extra };
       },
       start,

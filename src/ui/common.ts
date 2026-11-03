@@ -2,6 +2,7 @@ import { h, clear, announce } from './dom';
 import { t, type Key } from '../i18n';
 import { canShare, history, previewUrl, saveFile, shareFile, type OutputFile } from '../platform/files';
 import { formatBytes } from '../core/history';
+import { countUpValue } from '../core/feel';
 
 /** File picker with drag-and-drop. Validation happens in each tool. */
 export function filePicker(opts: {
@@ -78,10 +79,22 @@ export class Runner {
 
   progress(done: number, total: number, label: string = t('working')) {
     const pct = total ? Math.round((done / total) * 100) : 0;
-    const bar = h('progress', { max: 100, value: pct, 'aria-label': label });
+    // Update the bar in place so it glides to the new value instead of snapping.
+    const existing = this.el.querySelector<HTMLElement>('.bar');
+    if (existing) {
+      existing.setAttribute('aria-valuenow', String(pct));
+      existing.setAttribute('aria-label', label);
+      existing.classList.toggle('indeterminate', !total);
+      (existing.firstElementChild as HTMLElement).style.width = `${pct}%`;
+      this.el.querySelector('.run-label')!.textContent = label;
+      this.el.querySelector('.run-pct')!.textContent = total ? `${pct}%` : '';
+      return;
+    }
+    const bar = h('div', { class: `bar${total ? '' : ' indeterminate'}`, role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': pct, 'aria-label': label },
+      h('i', { style: `width:${pct}%` }));
     clear(
       this.el,
-      h('div', { class: 'card' }, h('div', { class: 'row' }, h('strong', {}, label), h('span', { class: 'muted' }, total ? `${pct}%` : '')), bar,
+      h('div', { class: 'card' }, h('div', { class: 'row' }, h('strong', { class: 'run-label' }, label), h('span', { class: 'muted run-pct' }, total ? `${pct}%` : '')), bar,
         h('button', { class: 'btn', onclick: () => this.cancel() }, t('cancel'))),
     );
   }
@@ -129,7 +142,9 @@ export class Runner {
       ];
       return h('div', { class: 'result' }, h('div', {}, h('strong', {}, f.name), h('div', { class: 'muted' }, formatBytes(f.bytes.length))), h('div', { class: 'row wrap' }, actions));
     });
-    clear(this.el, h('div', { class: 'card ok' }, h('h3', {}, '✓ ', t('done')), extra ?? null, cards, h('p', { class: 'muted small' }, t('originalSafe'))));
+    const tick = h('span', { class: 'tick', 'aria-hidden': 'true' });
+    tick.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9"/></svg>';
+    clear(this.el, h('div', { class: 'card ok pop' }, h('h3', { class: 'row' }, tick, t('done')), extra ?? null, cards, h('p', { class: 'muted small' }, t('originalSafe'))));
   }
 
   fail(e: unknown, retry: () => void) {
@@ -144,6 +159,22 @@ export class Runner {
   reset() {
     clear(this.el);
   }
+}
+
+/** Element whose number counts up from 0 to `target`, formatted by `format`. Jumps straight there with reduced motion. */
+export function countUp(target: number, format: (n: number) => string, durationMs = 700): HTMLElement {
+  const el = h('strong', { class: 'countup' }, format(target));
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced || typeof requestAnimationFrame !== 'function') return el;
+  el.textContent = format(0);
+  const t0 = performance.now();
+  const step = (now: number) => {
+    const v = countUpValue(target, now - t0, durationMs);
+    el.textContent = format(v);
+    if (v < target) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+  return el;
 }
 
 export function fileChip(name: string, size: number, actions: Node[] = []) {
