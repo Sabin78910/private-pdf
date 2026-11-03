@@ -35,8 +35,10 @@
         </provider>
     </application>
 
-    <!-- Permissions. No INTERNET permission: the app cannot send documents anywhere.
-         Everything (including OCR models) is bundled. Camera is used only when the user taps "Take photo". -->
+    <!-- Permissions. INTERNET is used only for optional Google sign-in. Every PDF tool and the OCR
+         models are bundled and work offline; documents are never sent anywhere.
+         Camera is used only when the user taps "Take photo". -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>
