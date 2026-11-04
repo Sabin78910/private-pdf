@@ -5,6 +5,7 @@ import { t, type Key } from '../i18n';
 import { canShare, history, previewUrl, saveFile, shareFile, type OutputFile } from '../platform/files';
 import { formatBytes } from '../core/history';
 import { countUpValue } from '../core/feel';
+import { progressStep } from '../core/theme';
 
 /** File picker with drag-and-drop. Validation happens in each tool. */
 export function filePicker(opts: {
@@ -83,7 +84,9 @@ export class Runner {
   }
 
   progress(done: number, total: number, label: string = t('working')) {
-    const pct = total ? Math.round((done / total) * 100) : 0;
+    const step = progressStep(done, total);
+    const pct = step?.pct ?? 0;
+    const stepText = step ? t('stepOf', { n: step.n, total: step.total }) : '';
     // Update the bar in place so it glides to the new value instead of snapping.
     const existing = this.el.querySelector<HTMLElement>('.bar');
     if (existing) {
@@ -93,6 +96,7 @@ export class Runner {
       (existing.firstElementChild as HTMLElement).style.width = `${pct}%`;
       this.el.querySelector('.run-label')!.textContent = label;
       this.el.querySelector('.run-pct')!.textContent = total ? `${pct}%` : '';
+      this.el.querySelector('.run-step')!.textContent = stepText;
       return;
     }
     const bar = h('div', { class: `bar${total ? '' : ' indeterminate'}`, role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': pct, 'aria-label': label },
@@ -100,6 +104,7 @@ export class Runner {
     clear(
       this.el,
       h('div', { class: 'card' }, h('div', { class: 'row' }, h('strong', { class: 'run-label' }, label), h('span', { class: 'muted run-pct' }, total ? `${pct}%` : '')), bar,
+        h('p', { class: 'muted small run-step', 'aria-live': 'polite' }, stepText),
         h('button', { class: 'btn', onclick: () => this.cancel() }, t('cancel'))),
     );
   }

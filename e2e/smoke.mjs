@@ -237,6 +237,8 @@ try {
   await page.waitForSelector('.lib-item');
   await page.fill('#libSearch', 'keepme');
   check((await page.locator('.lib-item').count()) === 1, 'library finds the kept file by search');
+  await page.waitForSelector('.lib-item .thumb-doc.has-img img', { timeout: 15_000 }).catch(() => {});
+  check((await page.locator('.lib-item .thumb-doc.has-img img').count()) === 1, 'library shows a page-1 preview');
   await page.click('text=New folder');
   await page.fill('#folderName', 'Bills');
   await page.click('form.namer >> text=Save');
