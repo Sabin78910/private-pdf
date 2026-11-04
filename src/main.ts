@@ -34,6 +34,8 @@ import { icon, type IconName } from './ui/icons';
 import { greeting, matchTool, QUICK_TOOLS, resolveTheme, TOOL_GROUPS, toolHue, type Theme } from './core/theme';
 import { allKeys } from './i18n';
 import welcomeArt from './assets/welcome.webp';
+import { activityStats } from './core/feel';
+import { feedbackOn, setFeedback } from './ui/celebrate';
 
 const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }[] = [
   { id: 'compress', icon: 'compress', render: compressTool },
@@ -185,6 +187,15 @@ function welcomeCard() {
   return card;
 }
 
+/** Small, honest progress badges from local history. Hidden until there is something to show. */
+function statsRow() {
+  const { week, streak } = activityStats(history.list(), Date.now());
+  if (!week && !streak) return null;
+  return h('div', { class: 'stats', role: 'status' },
+    week ? h('span', { class: 'stat' }, icon('check', 16), h('strong', {}, String(week)), t('stats.week')) : null,
+    streak > 1 ? h('span', { class: 'stat' }, icon('star', 16), h('strong', {}, String(streak)), t('stats.streak')) : null);
+}
+
 function home() {
   const results = h('div');
   const sections = h('div');
@@ -223,6 +234,7 @@ function home() {
     h('div', { class: 'largetitle' }, h('h1', {}, t(`greet.${greeting(new Date().getHours())}` as Key)),
       h('p', {}, icon('shield', 16), t('homeSub'))),
     welcomeCard(),
+    statsRow(),
     h('label', { class: 'searchbox' }, icon('search', 20), search),
     sections, results,
     h('p', { class: 'trust' }, icon('lock', 16), t('aboutBody')));
@@ -257,6 +269,8 @@ function settingsView() {
     segmented('theme', 'appearance', [['dark', t('theme.dark')], ['light', t('theme.light')]], theme, (v) => (applyTheme(v), route())),
     h('div', { class: 'caption-label', style: 'margin-top:24px' }, t('languageLabel')),
     segmented('lang', 'languageLabel', [['en', 'English'], ['ne', 'नेपाली']], lang(), (v) => (setLang(v), route())),
+    h('div', { class: 'caption-label', style: 'margin-top:24px' }, t('feedback')),
+    segmented('feedback', 'feedback', [['on', t('feedback.on')], ['off', t('feedback.off')]], feedbackOn() ? 'on' : 'off', (v) => (setFeedback(v === 'on'), route())),
     h('div', { class: 'caption-label', style: 'margin-top:24px' }, t('about')),
     h('div', { class: 'group' },
       signInEnabled() ? settingsRow('#/account', 'device', t('account'), a ? a.email : t('signIn')) : null,
