@@ -41,3 +41,10 @@ export function matchTool(names: string[], query: string): boolean {
   const hay = names.join(' ').toLocaleLowerCase();
   return words.length > 0 && words.every((w) => hay.includes(w));
 }
+
+/** Progress for a job: percent and the 1-based step to show ("3 of 12"), clamped to the total. */
+export function progressStep(done: number, total: number): { pct: number; n: number; total: number } | null {
+  if (!(total > 0)) return null;
+  const d = Math.min(Math.max(done, 0), total);
+  return { pct: Math.round((d / total) * 100), n: Math.max(1, Math.min(total, Math.ceil(d) || 1)), total };
+}

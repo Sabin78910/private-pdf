@@ -24,7 +24,7 @@ import { pageNumbersTool } from './tools/pagenumbers';
 import { watermarkTool } from './tools/watermark';
 import { protectTool } from './tools/protect';
 import { readerTool } from './tools/reader';
-import { libraryView } from './ui/libraryView';
+import { docThumb, libraryView } from './ui/libraryView';
 import { icon, type IconName } from './ui/icons';
 import { greeting, matchTool, QUICK_TOOLS, resolveTheme, TOOL_GROUPS, toolHue, type Theme } from './core/theme';
 import { allKeys } from './i18n';
@@ -144,7 +144,7 @@ const when = (ms: number) => new Date(ms).toLocaleDateString(lang() === 'ne' ? '
 function fileRow(it: LibraryItem) {
   const pdf = it.mime === 'application/pdf';
   return h('li', {}, h('a', { class: 'rowi', href: pdf ? `#/reader?lib=${encodeURIComponent(it.id)}` : '#/library' },
-    h('span', { class: `thumb-doc${pdf ? '' : ' img'}` }, icon(pdf ? 'file' : 'toimage', 20)),
+    docThumb(it),
     h('span', { class: 'grow' }, h('span', { class: 't' }, it.name), h('span', { class: 'm' }, `${formatBytes(it.size)} · ${when(it.openedAt)}`)),
     h('span', { class: 'end' }, icon('chevron', 18))));
 }

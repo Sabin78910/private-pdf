@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { otherTheme, resolveTheme, TOOL_GROUPS } from '../src/core/theme';
+import { otherTheme, progressStep, resolveTheme, TOOL_GROUPS } from '../src/core/theme';
 import { allKeys } from '../src/i18n';
 
 describe('theme', () => {
@@ -47,5 +47,16 @@ describe('home helpers', async () => {
     expect(QUICK_TOOLS).toHaveLength(8);
     const all = TOOL_GROUPS.flatMap((g) => g.tools);
     for (const id of QUICK_TOOLS) expect(all).toContain(id);
+  });
+});
+
+describe('progressStep', () => {
+  it('gives the percent and a 1-based step', () => {
+    expect(progressStep(3, 12)).toEqual({ pct: 25, n: 3, total: 12 });
+    expect(progressStep(0, 4)).toEqual({ pct: 0, n: 1, total: 4 });
+  });
+  it('clamps past the end and hides when the total is unknown', () => {
+    expect(progressStep(15, 12)).toEqual({ pct: 100, n: 12, total: 12 });
+    expect(progressStep(2, 0)).toBeNull();
   });
 });

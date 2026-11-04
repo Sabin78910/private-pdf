@@ -7,6 +7,48 @@ import { formatBytes } from '../core/history';
 import { checkFolderName, viewItems, type Folder, type LibraryItem, type LibraryView } from '../core/library';
 import * as store from '../platform/libraryStore';
 import emptyArt from '../assets/library-empty.webp';
+import { openPdf, thumbnail } from '../platform/render';
+
+// Page-1 previews for Library rows, rendered on the device one at a time as rows scroll into view.
+const thumbCache = new Map<string, string>();
+let thumbChain: Promise<void> = Promise.resolve();
+let thumbObserver: IntersectionObserver | null = null;
+const pendingThumbs = new WeakMap<Element, LibraryItem>();
+
+async function drawThumb(it: LibraryItem, el: HTMLElement) {
+  let url = thumbCache.get(it.id);
+  if (!url) {
+    const doc = await openPdf((await store.readItem(it, false)).bytes);
+    try {
+      url = (await thumbnail(doc, 0, 40)).toDataURL('image/jpeg', 0.75);
+    } finally {
+      void doc.destroy();
+    }
+    thumbCache.set(it.id, url);
+  }
+  el.replaceChildren(h('img', { src: url, alt: '' }));
+  el.classList.add('has-img');
+}
+
+/** Document icon that swaps to a page-1 preview for PDFs (the icon stays if the file cannot render). */
+export function docThumb(it: LibraryItem): HTMLElement {
+  const pdf = it.mime === 'application/pdf';
+  const el = h('span', { class: `thumb-doc${pdf ? '' : ' img'}`, 'aria-hidden': 'true' }, icon(pdf ? 'file' : 'toimage', 20));
+  if (!pdf || typeof IntersectionObserver === 'undefined') return el;
+  thumbObserver ??= new IntersectionObserver((entries) => {
+    for (const en of entries) {
+      const item = en.isIntersecting ? pendingThumbs.get(en.target) : undefined;
+      if (!item) continue;
+      thumbObserver!.unobserve(en.target);
+      pendingThumbs.delete(en.target);
+      const target = en.target as HTMLElement;
+      thumbChain = thumbChain.then(() => drawThumb(item, target)).catch(() => {});
+    }
+  }, { rootMargin: '200px 0px' });
+  pendingThumbs.set(el, it);
+  thumbObserver.observe(el);
+  return el;
+}
 
 let view: LibraryView = { kind: 'all' };
 let query = '';
@@ -79,7 +121,7 @@ export function libraryView(): HTMLElement {
     const when = new Date(it.addedAt).toLocaleDateString(lang() === 'ne' ? 'ne-NP' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     return h('li', { class: 'lib-item' },
       h('a', { class: 'open', href: pdf ? `#/reader?lib=${encodeURIComponent(it.id)}` : '#/library', onclick: (e: Event) => { if (!pdf) { e.preventDefault(); sheetFor(it); } } },
-        h('span', { class: `thumb-doc${pdf ? '' : ' img'}` }, icon(pdf ? 'file' : 'toimage', 20)),
+        docThumb(it),
         h('span', { class: 'grow' }, h('span', { class: 'name' }, it.name), h('span', { class: 'muted small' }, `${formatBytes(it.size)} · ${when}`))),
       h('button', { class: `icon-btn star${it.favorite ? ' on' : ''}`, 'aria-pressed': it.favorite ? 'true' : 'false', 'aria-label': `${t('favorite')}: ${it.name}`,
         onclick: async () => (await store.updateItem({ ...it, favorite: !it.favorite }), void refresh()) }, icon('star', 20)),
