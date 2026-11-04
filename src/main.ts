@@ -26,6 +26,7 @@ import { toWordTool } from './tools/toword';
 import { pageNumbersTool } from './tools/pagenumbers';
 import { watermarkTool } from './tools/watermark';
 import { protectTool } from './tools/protect';
+import { redactTool } from './tools/redact';
 import { cropTool, flattenTool } from './tools/crop';
 import { readerTool } from './tools/reader';
 import { docThumb, libraryView } from './ui/libraryView';
@@ -50,6 +51,7 @@ const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }
   { id: 'watermark', icon: 'watermark', render: watermarkTool },
   { id: 'crop', icon: 'crop', render: cropTool },
   { id: 'flatten', icon: 'flatten', render: flattenTool },
+  { id: 'redact', icon: 'redact', render: redactTool },
   { id: 'protect', icon: 'protect', render: protectTool },
   { id: 'reader', icon: 'reader', render: readerTool },
 ];

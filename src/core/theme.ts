@@ -12,7 +12,7 @@ export const TOOL_GROUPS: { id: string; tools: string[] }[] = [
   { id: 'scanocr', tools: ['scan', 'idcard', 'ocr', 'qr'] },
   { id: 'edit', tools: ['reader', 'merge', 'split', 'organize', 'crop', 'numbers', 'watermark'] },
   { id: 'optimize', tools: ['compress', 'toimage', 'toword'] },
-  { id: 'secure', tools: ['sign', 'flatten', 'protect'] },
+  { id: 'secure', tools: ['sign', 'flatten', 'redact', 'protect'] },
 ];
 
 export type Hue = 'teal' | 'indigo' | 'amber' | 'rose' | 'sky';

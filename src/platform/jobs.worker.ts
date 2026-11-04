@@ -10,6 +10,7 @@ import { loadPdf } from '../core/load';
 import { addPageNumbers } from '../core/pageNumbers';
 import { addWatermark } from '../core/watermark';
 import { protectPdf } from '../core/protect';
+import { applyRedactions } from '../core/redact';
 import { cropPages, flattenForm } from '../core/crop';
 import { addAnnotations } from '../core/annotate';
 import type { JobMessage, JobRequest } from './jobs';
@@ -45,6 +46,8 @@ async function run(req: JobRequest): Promise<unknown> {
       return cropPages(req.bytes, req.margins);
     case 'flatten':
       return flattenForm(req.bytes);
+    case 'redact':
+      return applyRedactions(req.bytes, req.flat);
     case 'protect':
       return protectPdf(req.bytes, req.password);
     case 'pageCount':

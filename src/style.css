@@ -427,6 +427,10 @@ label.row:has(input[type='checkbox']) { justify-content: space-between; flex-dir
 /* Crop */
 .crop-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 12px 0; }
 
+/* Redact */
+.redact-stage { margin: 12px 0; }
+.redact-stage canvas { width: 100%; height: auto; border-radius: 8px; box-shadow: 0 1px 4px rgb(0 0 0 / .3); cursor: crosshair; }
+
 /* QR scanner */
 .qr-cam { position: relative; max-width: 640px; margin-top: 12px; }
 .qr-cam .webcam { display: block; }

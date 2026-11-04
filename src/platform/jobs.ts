@@ -1,3 +1,4 @@
+import type { FlatPage } from '../core/redact';
 import type { CropMargins } from '../core/crop';
 /// <reference lib="webworker" />
 // Runs pdf-lib operations off the main thread so a 50 MB file never freezes the UI.
@@ -23,6 +24,7 @@ export type JobRequest =
   | { op: 'annotate'; bytes: Uint8Array; annotations: Annotation[] }
   | { op: 'crop'; bytes: Uint8Array; margins: CropMargins }
   | { op: 'flatten'; bytes: Uint8Array }
+  | { op: 'redact'; bytes: Uint8Array; flat: FlatPage[] }
   | { op: 'protect'; bytes: Uint8Array; password: string }
   | { op: 'pageCount'; bytes: Uint8Array };
 
