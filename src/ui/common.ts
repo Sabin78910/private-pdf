@@ -62,7 +62,7 @@ export function filePicker(opts: {
 
 export function errorKey(e: unknown): Key {
   const code = (e as { code?: string })?.code;
-  const known = ['encrypted', 'corrupted', 'empty', 'invalid-range', 'unsupported-image', 'no-input', 'cancelled', 'font-unsupported', 'text-unsupported', 'invalid-password', 'memory'];
+  const known = ['encrypted', 'corrupted', 'empty', 'invalid-range', 'unsupported-image', 'no-input', 'cancelled', 'font-unsupported', 'text-unsupported', 'invalid-password', 'no-form', 'memory'];
   if (code && known.includes(code)) return `err.${code}` as Key;
   if (/memory|allocation/i.test(String((e as Error)?.message))) return 'err.memory';
   return 'err.unknown';
