@@ -22,6 +22,7 @@ import { qrTool } from './tools/qr';
 import { organizeTool } from './tools/organize';
 import { signTool } from './tools/sign';
 import { toImageTool } from './tools/toimage';
+import { toWordTool } from './tools/toword';
 import { pageNumbersTool } from './tools/pagenumbers';
 import { watermarkTool } from './tools/watermark';
 import { protectTool } from './tools/protect';
@@ -44,6 +45,7 @@ const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }
   { id: 'organize', icon: 'organize', render: organizeTool },
   { id: 'sign', icon: 'sign', render: signTool },
   { id: 'toimage', icon: 'toimage', render: toImageTool },
+  { id: 'toword', icon: 'toword', render: toWordTool },
   { id: 'numbers', icon: 'numbers', render: pageNumbersTool },
   { id: 'watermark', icon: 'watermark', render: watermarkTool },
   { id: 'crop', icon: 'crop', render: cropTool },
