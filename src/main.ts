@@ -18,6 +18,7 @@ import { compressTool } from './tools/compress';
 import { scanTool } from './tools/scan';
 import { ocrTool } from './tools/ocr';
 import { idCardTool } from './tools/idcard';
+import { qrTool } from './tools/qr';
 import { organizeTool } from './tools/organize';
 import { signTool } from './tools/sign';
 import { toImageTool } from './tools/toimage';
@@ -38,6 +39,7 @@ const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }
   { id: 'scan', icon: 'scan', render: scanTool },
   { id: 'idcard', icon: 'idcard', render: idCardTool },
   { id: 'ocr', icon: 'ocr', render: ocrTool },
+  { id: 'qr', icon: 'qr', render: qrTool },
   { id: 'organize', icon: 'organize', render: organizeTool },
   { id: 'sign', icon: 'sign', render: signTool },
   { id: 'toimage', icon: 'toimage', render: toImageTool },

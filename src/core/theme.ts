@@ -9,7 +9,7 @@ export const otherTheme = (t: Theme): Theme => (t === 'dark' ? 'light' : 'dark')
 
 /** Tool groups for the home screen, in display order. Every tool id appears exactly once. */
 export const TOOL_GROUPS: { id: string; tools: string[] }[] = [
-  { id: 'scanocr', tools: ['scan', 'idcard', 'ocr'] },
+  { id: 'scanocr', tools: ['scan', 'idcard', 'ocr', 'qr'] },
   { id: 'edit', tools: ['reader', 'merge', 'split', 'organize', 'numbers', 'watermark'] },
   { id: 'optimize', tools: ['compress', 'toimage'] },
   { id: 'secure', tools: ['sign', 'protect'] },
