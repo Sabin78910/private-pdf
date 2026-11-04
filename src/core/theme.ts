@@ -11,7 +11,7 @@ export const otherTheme = (t: Theme): Theme => (t === 'dark' ? 'light' : 'dark')
 export const TOOL_GROUPS: { id: string; tools: string[] }[] = [
   { id: 'scanocr', tools: ['scan', 'idcard', 'ocr', 'qr'] },
   { id: 'edit', tools: ['reader', 'merge', 'split', 'organize', 'crop', 'numbers', 'watermark'] },
-  { id: 'optimize', tools: ['compress', 'toimage'] },
+  { id: 'optimize', tools: ['compress', 'toimage', 'toword'] },
   { id: 'secure', tools: ['sign', 'flatten', 'protect'] },
 ];
 

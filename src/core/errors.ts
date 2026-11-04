@@ -9,6 +9,7 @@ export type PdfErrorCode =
   | 'font-unsupported'
   | 'text-unsupported'
   | 'invalid-password'
+  | 'no-text'
   | 'no-form';
 
 /** Error with a stable code so the UI can show an actionable, localised message. */
