@@ -346,6 +346,8 @@ label.row:has(input[type='checkbox']) { justify-content: space-between; flex-dir
 /* Chips (filters) */
 .chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
+/* Fade the right edge so a cut-off chip reads as "scroll for more", not a clipped layout. */
+.chips { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); padding-right: 24px; }
 .chipbtn { appearance: none; flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line);
   background: var(--surface); color: var(--text); font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; transition: background 160ms, color 160ms; }
 .chipbtn.on { background: var(--text); color: var(--bg); border-color: var(--text); }
