@@ -3,6 +3,7 @@ import { mergePdfs } from '../core/merge';
 import { extractPages, splitEvery } from '../core/split';
 import { applyPagePlan } from '../core/organize';
 import { imagesToPdf } from '../core/imagesToPdf';
+import { idCardPdf } from '../core/idCard';
 import { compressLossless } from '../core/compress';
 import { fillAndSign } from '../core/fillSign';
 import { loadPdf } from '../core/load';
@@ -27,6 +28,8 @@ async function run(req: JobRequest): Promise<unknown> {
       return applyPagePlan(req.bytes, req.plan);
     case 'images':
       return imagesToPdf(req.images, req.fit, progress);
+    case 'idcard':
+      return idCardPdf(req.images);
     case 'compressLossless':
       return compressLossless(req.bytes);
     case 'fillSign':
