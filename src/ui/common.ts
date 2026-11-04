@@ -6,6 +6,7 @@ import { canShare, history, previewUrl, saveFile, shareFile, type OutputFile } f
 import { formatBytes } from '../core/history';
 import { countUpValue } from '../core/feel';
 import { progressStep } from '../core/theme';
+import { celebrate } from './celebrate';
 
 /** File picker with drag-and-drop. Validation happens in each tool. */
 export function filePicker(opts: {
@@ -147,7 +148,7 @@ export class Runner {
       const viewable = pdf || f.mime.startsWith('image/');
       return h('div', { class: 'result' },
         h('div', { class: 'fhead' },
-          h('span', { class: `thumb-doc${pdf ? '' : ' img'}` }, icon(pdf ? 'file' : f.mime === 'application/zip' ? 'folder' : 'toimage', 20)),
+          h('span', { class: `thumb-doc${pdf ? '' : ' img'}` }, icon(pdf ? 'file' : f.mime === 'application/zip' ? 'folder' : f.mime.startsWith('image/') ? 'toimage' : 'file', 20)),
           h('div', { class: 'grow' }, h('strong', {}, f.name), h('span', { class: 'muted small' }, formatBytes(f.bytes.length)))),
         h('div', { class: 'acts' },
           h('button', { class: 'btn primary act-save', onclick: () => saveFile(f).then(() => toast(t('done'))).catch(() => {}) }, icon('download', 18), t('saveDevice')),
@@ -159,6 +160,7 @@ export class Runner {
     tick.innerHTML = '<svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9"/></svg>';
     clear(this.el, h('div', { class: 'card ok pop success' }, tick, h('h3', {}, t('done')), h('p', { class: 'sub' }, t('doneSub')), extra ?? null, cards));
     this.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    celebrate(tick);
   }
 
   fail(e: unknown, retry: () => void) {
