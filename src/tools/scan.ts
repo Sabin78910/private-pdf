@@ -11,14 +11,14 @@ import { PdfError } from '../core/errors';
 const MAX_SIDE = 2200; // enough for A4 at ~200 dpi, small enough for phones
 const DETECT_SIDE = 320;
 
-interface ScanPage {
+export interface ScanPage {
   name: string;
   source: HTMLCanvasElement;
   quad: Quad;
   filter: ScanFilter;
 }
 
-function toCanvas(img: CanvasImageSource & { width: number; height: number }, maxSide: number) {
+export function toCanvas(img: CanvasImageSource & { width: number; height: number }, maxSide: number) {
   const s = Math.min(1, maxSide / Math.max(img.width, img.height));
   const c = document.createElement('canvas');
   c.width = Math.round(img.width * s);
@@ -31,7 +31,7 @@ const pixels = (c: HTMLCanvasElement): Pixels => {
   return { width: d.width, height: d.height, data: d.data };
 };
 
-async function pageFromSource(name: string, src: CanvasImageSource & { width: number; height: number }): Promise<ScanPage> {
+export async function pageFromSource(name: string, src: CanvasImageSource & { width: number; height: number }): Promise<ScanPage> {
   const source = toCanvas(src, MAX_SIDE);
   const small = toCanvas(source, DETECT_SIDE);
   const k = source.width / small.width;
@@ -40,7 +40,7 @@ async function pageFromSource(name: string, src: CanvasImageSource & { width: nu
 }
 
 /** Canvas with the photo and four draggable corner handles. */
-function cornerEditor(page: ScanPage, onChange: () => void) {
+export function cornerEditor(page: ScanPage, onChange: () => void) {
   const view = toCanvas(page.source, 900);
   const k = page.source.width / view.width;
   const ctx = view.getContext('2d')!;
@@ -87,8 +87,9 @@ function cornerEditor(page: ScanPage, onChange: () => void) {
   return view;
 }
 
-function processPage(p: ScanPage): HTMLCanvasElement {
-  const flat = applyFilter(warpPerspective(pixels(p.source), p.quad), p.filter);
+/** Flattens the page to its corners; `out` forces a size, e.g. an ID card's real aspect. */
+export function processPage(p: ScanPage, out?: { width: number; height: number }): HTMLCanvasElement {
+  const flat = applyFilter(warpPerspective(pixels(p.source), p.quad, out), p.filter);
   const c = document.createElement('canvas');
   c.width = flat.width;
   c.height = flat.height;

@@ -17,6 +17,7 @@ import { splitTool } from './tools/split';
 import { compressTool } from './tools/compress';
 import { scanTool } from './tools/scan';
 import { ocrTool } from './tools/ocr';
+import { idCardTool } from './tools/idcard';
 import { organizeTool } from './tools/organize';
 import { signTool } from './tools/sign';
 import { toImageTool } from './tools/toimage';
@@ -35,6 +36,7 @@ const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }
   { id: 'merge', icon: 'merge', render: mergeTool },
   { id: 'split', icon: 'split', render: splitTool },
   { id: 'scan', icon: 'scan', render: scanTool },
+  { id: 'idcard', icon: 'idcard', render: idCardTool },
   { id: 'ocr', icon: 'ocr', render: ocrTool },
   { id: 'organize', icon: 'organize', render: organizeTool },
   { id: 'sign', icon: 'sign', render: signTool },

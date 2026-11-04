@@ -14,6 +14,7 @@ export type JobRequest =
   | { op: 'splitEvery'; bytes: Uint8Array; every: number }
   | { op: 'organize'; bytes: Uint8Array; plan: PagePlanItem[] }
   | { op: 'images'; images: ImageInput[]; fit: PageFit }
+  | { op: 'idcard'; images: ImageInput[] }
   | { op: 'compressLossless'; bytes: Uint8Array }
   | { op: 'fillSign'; bytes: Uint8Array; input: FillSignInput }
   | { op: 'pageNumbers'; bytes: Uint8Array; options: PageNumberOptions }
