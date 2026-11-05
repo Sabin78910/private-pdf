@@ -207,7 +207,7 @@ function welcomeCard() {
     /* storage blocked: show it, dismissing still hides it for this visit */
   }
   const card = h('section', { class: 'card welcome', 'aria-labelledby': 'welcomeTitle' },
-    h('img', { class: 'art', src: welcomeArt, alt: '', width: 560, height: 431, decoding: 'async' }),
+    h('img', { class: 'art', src: welcomeArt, alt: '', width: 560, height: 431, decoding: 'async', fetchpriority: 'high' }),
     h('h2', { id: 'welcomeTitle' }, t('welcome.title')),
     h('p', {}, t('welcome.body')),
     h('button', { class: 'btn primary', id: 'welcomeOk', onclick: () => {

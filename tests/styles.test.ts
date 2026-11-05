@@ -43,3 +43,12 @@ describe('style.css', () => {
     expect(topLevelSelectors(css).some((s) => s.startsWith(':root[data-theme='))).toBe(true);
   });
 });
+
+// The welcome art is the largest paint on first launch; it must not wait behind other images.
+describe('first paint', () => {
+  it('fetches the welcome art at high priority and ships robots.txt', () => {
+    const main = readFileSync(resolve(__dirname, '../src/main.ts'), 'utf8');
+    expect(main).toMatch(/src: welcomeArt[^)]*fetchpriority: 'high'/);
+    expect(readFileSync(resolve(__dirname, '../public/robots.txt'), 'utf8')).toContain('User-agent');
+  });
+});
