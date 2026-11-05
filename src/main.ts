@@ -12,24 +12,6 @@ import { listItems, libraryAvailable, readItem } from './platform/libraryStore';
 import { viewItems, matchesQuery, type LibraryItem } from './core/library';
 import { initials } from './core/auth';
 import { currentAccount, signIn, signInEnabled, signOut } from './platform/auth';
-import { mergeTool } from './tools/merge';
-import { splitTool } from './tools/split';
-import { compressTool } from './tools/compress';
-import { scanTool } from './tools/scan';
-import { ocrTool } from './tools/ocr';
-import { idCardTool } from './tools/idcard';
-import { qrTool } from './tools/qr';
-import { organizeTool } from './tools/organize';
-import { signTool } from './tools/sign';
-import { toImageTool } from './tools/toimage';
-import { toWordTool } from './tools/toword';
-import { pageNumbersTool } from './tools/pagenumbers';
-import { watermarkTool } from './tools/watermark';
-import { protectTool } from './tools/protect';
-import { redactTool } from './tools/redact';
-import { cropTool, flattenTool } from './tools/crop';
-import { readerTool } from './tools/reader';
-import { cameraTool, stopCamera } from './tools/camera';
 import { docThumb, libraryView } from './ui/libraryView';
 import { icon, type IconName } from './ui/icons';
 import { parseUsage, rankTools, recordUse, USAGE_KEY } from './core/frecency';
@@ -39,25 +21,32 @@ import welcomeArt from './assets/welcome.webp';
 import { activityStats } from './core/feel';
 import { feedbackOn, setFeedback } from './ui/celebrate';
 
-const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }[] = [
-  { id: 'compress', icon: 'compress', render: compressTool },
-  { id: 'merge', icon: 'merge', render: mergeTool },
-  { id: 'split', icon: 'split', render: splitTool },
-  { id: 'scan', icon: 'scan', render: scanTool },
-  { id: 'idcard', icon: 'idcard', render: idCardTool },
-  { id: 'ocr', icon: 'ocr', render: ocrTool },
-  { id: 'qr', icon: 'qr', render: qrTool },
-  { id: 'organize', icon: 'organize', render: organizeTool },
-  { id: 'sign', icon: 'sign', render: signTool },
-  { id: 'toimage', icon: 'toimage', render: toImageTool },
-  { id: 'toword', icon: 'toword', render: toWordTool },
-  { id: 'numbers', icon: 'numbers', render: pageNumbersTool },
-  { id: 'watermark', icon: 'watermark', render: watermarkTool },
-  { id: 'crop', icon: 'crop', render: cropTool },
-  { id: 'flatten', icon: 'flatten', render: flattenTool },
-  { id: 'redact', icon: 'redact', render: redactTool },
-  { id: 'protect', icon: 'protect', render: protectTool },
-  { id: 'reader', icon: 'reader', render: readerTool },
+type Render = (root: HTMLElement) => void | Promise<void>;
+/** Tool screens (and pdf-lib, pdf.js, tesseract behind them) load on first open, not at startup. */
+function lazy<K extends string>(load: () => Promise<Record<K, unknown>>, name: K): Render {
+  return async (root) => (((await load())[name]) as (r: HTMLElement) => void)(root);
+}
+let stopCamera = () => {};
+
+const TOOLS: { id: string; icon: IconName; render: Render }[] = [
+  { id: 'compress', icon: 'compress', render: lazy(() => import('./tools/compress'), 'compressTool') },
+  { id: 'merge', icon: 'merge', render: lazy(() => import('./tools/merge'), 'mergeTool') },
+  { id: 'split', icon: 'split', render: lazy(() => import('./tools/split'), 'splitTool') },
+  { id: 'scan', icon: 'scan', render: lazy(() => import('./tools/scan'), 'scanTool') },
+  { id: 'idcard', icon: 'idcard', render: lazy(() => import('./tools/idcard'), 'idCardTool') },
+  { id: 'ocr', icon: 'ocr', render: lazy(() => import('./tools/ocr'), 'ocrTool') },
+  { id: 'qr', icon: 'qr', render: lazy(() => import('./tools/qr'), 'qrTool') },
+  { id: 'organize', icon: 'organize', render: lazy(() => import('./tools/organize'), 'organizeTool') },
+  { id: 'sign', icon: 'sign', render: lazy(() => import('./tools/sign'), 'signTool') },
+  { id: 'toimage', icon: 'toimage', render: lazy(() => import('./tools/toimage'), 'toImageTool') },
+  { id: 'toword', icon: 'toword', render: lazy(() => import('./tools/toword'), 'toWordTool') },
+  { id: 'numbers', icon: 'numbers', render: lazy(() => import('./tools/pagenumbers'), 'pageNumbersTool') },
+  { id: 'watermark', icon: 'watermark', render: lazy(() => import('./tools/watermark'), 'watermarkTool') },
+  { id: 'crop', icon: 'crop', render: lazy(() => import('./tools/crop'), 'cropTool') },
+  { id: 'flatten', icon: 'flatten', render: lazy(() => import('./tools/crop'), 'flattenTool') },
+  { id: 'redact', icon: 'redact', render: lazy(() => import('./tools/redact'), 'redactTool') },
+  { id: 'protect', icon: 'protect', render: lazy(() => import('./tools/protect'), 'protectTool') },
+  { id: 'reader', icon: 'reader', render: lazy(() => import('./tools/reader'), 'readerTool') },
 ];
 
 const app = document.getElementById('app')!;
@@ -339,7 +328,10 @@ function route() {
     document.title = `${t('qa.scan')} · ${t('appName')}`;
     const root = h('main', { class: 'cam-root' });
     clear(app, root, h('div', { id: 'live', class: 'visually-hidden', 'aria-live': 'polite' }));
-    cameraTool(root);
+    void import('./tools/camera').then((m) => {
+      stopCamera = m.stopCamera;
+      if (root.isConnected) m.cameraTool(root);
+    });
     return;
   }
   const tool = TOOLS.find((x) => x.id === id);
@@ -356,7 +348,7 @@ function route() {
       body);
     bar = appbar({ back: true, title: toolName(tool.id), fade: true });
     noteToolUse(tool.id);
-    tool.render(body);
+    void tool.render(body);
   } else if (id === 'library') (main = libraryView()), (bar = appbar({ brand: true }));
   else if (id === 'tools') (main = toolsView()), (bar = appbar({ brand: true }));
   else if (id === 'settings') (main = settingsView()), (bar = appbar({ brand: true }));
