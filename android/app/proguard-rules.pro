@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Google sign-in plugin (no consumer rules in this version): keep it and Credential Manager intact.
+-keep class ee.forgr.capacitor.social.login.** { *; }
+-keep class androidx.credentials.** { *; }
+-keep class com.google.android.libraries.identity.googleid.** { *; }
+-dontwarn ee.forgr.capacitor.social.login.**
