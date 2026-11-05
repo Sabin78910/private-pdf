@@ -180,6 +180,23 @@ main { animation: enter 240ms var(--ease); }
 .thumb-doc.img { background: color-mix(in srgb, var(--hue-sky) 14%, transparent); color: var(--hue-sky); }
 .setico { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 10px; background: var(--surface-2); color: var(--text-2); }
 .empty-row { padding: 20px 16px; color: var(--text-2); text-align: center; }
+.ledger { margin: 0 0 16px; padding: 16px; border-radius: var(--r-card); border: 1px solid var(--line);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, var(--surface)), var(--surface) 60%); }
+.ledger-head { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
+.ledger-head .i { color: var(--success); }
+.lstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.lstat strong { display: block; font-size: 24px; line-height: 30px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.lstat span { font-size: 13px; line-height: 18px; color: var(--text-2); }
+.lstat.zero strong { color: var(--success); }
+.lnext { margin-top: 12px; }
+.lnext p { margin-top: 6px; font-size: 13px; line-height: 18px; color: var(--text-2); }
+.lbar { height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.lbar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--primary), var(--accent));
+  transition: width 600ms var(--ease); }
+.milestone { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: var(--r-ctl);
+  background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); font-weight: 600; animation: rise 360ms var(--ease); }
+@media (prefers-reduced-motion: reduce) { .lbar i { transition: none; } .milestone { animation: none; } }
 .trust { margin: 32px 4px 0; display: flex; gap: 10px; align-items: flex-start; color: var(--text-2); font-size: 13px; line-height: 18px; }
 .trust .i { color: var(--success); margin-top: 1px; }
 

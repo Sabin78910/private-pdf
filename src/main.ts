@@ -5,7 +5,8 @@ import '@fontsource/noto-sans-devanagari/devanagari-700.css';
 import './style.css';
 import { h, clear } from './ui/dom';
 import { initLang, lang, setLang, t, type Key } from './i18n';
-import { history, isNative } from './platform/files';
+import { history, isNative, ledgerStore } from './platform/files';
+import { loadLedger, nextMilestone } from './core/ledger';
 import { formatBytes } from './core/history';
 import { PRIVACY_EN, PRIVACY_NE } from './ui/privacyText';
 import { listItems, libraryAvailable } from './platform/libraryStore';
@@ -174,6 +175,23 @@ function welcomeCard() {
   return card;
 }
 
+/** Lifetime record of work done locally: visible progress towards the next milestone, and 0 uploads. */
+function ledgerCard() {
+  const l = loadLedger(ledgerStore);
+  const next = nextMilestone(l.jobs);
+  const stat = (value: string, label: Key, cls = '') => h('div', { class: `lstat${cls}` }, h('strong', {}, value), h('span', {}, t(label)));
+  return h('section', { class: 'ledger', 'aria-label': t('ledger.title') },
+    h('div', { class: 'ledger-head' }, icon('shield', 18), h('span', {}, t('ledger.title'))),
+    h('div', { class: 'lstats' },
+      stat(String(l.jobs), 'ledger.jobs'),
+      stat(formatBytes(l.saved), 'ledger.saved'),
+      stat('0', 'ledger.uploads', ' zero')),
+    next ? h('div', { class: 'lnext' },
+      h('div', { class: 'lbar', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': next.target, 'aria-valuenow': l.jobs, 'aria-label': t('ledger.next', { n: next.target - l.jobs }) },
+        h('i', { style: `width:${Math.max(4, Math.round(next.progress * 100))}%` })),
+      h('p', {}, l.jobs ? t('ledger.next', { n: next.target - l.jobs }) : t('ledger.first'))) : null);
+}
+
 function home() {
   const results = h('div');
   const sections = h('div');
@@ -212,6 +230,7 @@ function home() {
     h('div', { class: 'largetitle' }, h('h1', {}, t(`greet.${greeting(new Date().getHours())}` as Key)),
       h('p', {}, icon('shield', 16), t('homeSub'))),
     welcomeCard(),
+    ledgerCard(),
     h('label', { class: 'searchbox' }, icon('search', 20), search),
     sections, results,
     h('p', { class: 'trust' }, icon('lock', 16), t('aboutBody')));
