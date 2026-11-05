@@ -1,6 +1,6 @@
 import { h, clear } from '../ui/dom';
 import { t } from '../i18n';
-import { Runner, filePicker, fileChip, isPdfFile } from '../ui/common';
+import { Runner, filePicker, fileChip, isPdfFile, libraryFile } from '../ui/common';
 import { readFile } from '../platform/files';
 import { openPdf } from '../platform/render';
 import { buildDocx, toParagraphs, type TextItem } from '../core/toWord';
@@ -50,4 +50,5 @@ export function toWordTool(root: HTMLElement) {
     const f = fs.find(isPdfFile);
     if (f) ((file = f), runner.reset(), draw());
   } }), body, runner.el);
+  void libraryFile().then((f) => f && ((file = f), draw()));
 }
