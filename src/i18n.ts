@@ -2,6 +2,7 @@ export type Lang = 'en' | 'ne';
 
 const en = {
   appName: 'Private PDF',
+  loadFailed: 'This tool could not load. Close and reopen the app, then try again.',
   tagline: 'PDF tools that never upload your documents.',
   privacyBadge: 'Processed on this device. Nothing is uploaded.',
   home: 'All tools',
@@ -319,6 +320,7 @@ type Dict = typeof en;
 
 const ne: Dict = {
   appName: 'प्राइभेट PDF',
+  loadFailed: 'यो उपकरण खुल्न सकेन। एप बन्द गरेर फेरि खोल्नुहोस्, अनि फेरि प्रयास गर्नुहोस्।',
   tagline: 'तपाईंका कागजात कहिल्यै अपलोड नगर्ने PDF उपकरणहरू।',
   privacyBadge: 'यही उपकरणमा प्रशोधन हुन्छ। केही पनि अपलोड हुँदैन।',
   home: 'सबै उपकरण',

@@ -7,7 +7,6 @@ import { formatBytes } from '../core/history';
 import { checkFolderName, viewItems, type Folder, type LibraryItem, type LibraryView } from '../core/library';
 import * as store from '../platform/libraryStore';
 import emptyArt from '../assets/library-empty.webp';
-import { openPdf, thumbnail } from '../platform/render';
 
 // Page-1 previews for Library rows, rendered on the device one at a time as rows scroll into view.
 const thumbCache = new Map<string, string>();
@@ -18,6 +17,7 @@ const pendingThumbs = new WeakMap<Element, LibraryItem>();
 async function drawThumb(it: LibraryItem, el: HTMLElement) {
   let url = thumbCache.get(it.id);
   if (!url) {
+    const { openPdf, thumbnail } = await import('../platform/render'); // keeps pdf.js out of the startup bundle
     const doc = await openPdf((await store.readItem(it, false)).bytes);
     try {
       url = (await thumbnail(doc, 0, 40)).toDataURL('image/jpeg', 0.75);
