@@ -12,24 +12,6 @@ import { listItems, libraryAvailable, readItem } from './platform/libraryStore';
 import { viewItems, matchesQuery, type LibraryItem } from './core/library';
 import { initials } from './core/auth';
 import { currentAccount, signIn, signInEnabled, signOut } from './platform/auth';
-import { mergeTool } from './tools/merge';
-import { splitTool } from './tools/split';
-import { compressTool } from './tools/compress';
-import { scanTool } from './tools/scan';
-import { ocrTool } from './tools/ocr';
-import { idCardTool } from './tools/idcard';
-import { qrTool } from './tools/qr';
-import { organizeTool } from './tools/organize';
-import { signTool } from './tools/sign';
-import { toImageTool } from './tools/toimage';
-import { toWordTool } from './tools/toword';
-import { pageNumbersTool } from './tools/pagenumbers';
-import { watermarkTool } from './tools/watermark';
-import { protectTool } from './tools/protect';
-import { redactTool } from './tools/redact';
-import { cropTool, flattenTool } from './tools/crop';
-import { readerTool } from './tools/reader';
-import { cameraTool, stopCamera } from './tools/camera';
 import { docThumb, libraryView } from './ui/libraryView';
 import { icon, type IconName } from './ui/icons';
 import { parseUsage, rankTools, recordUse, USAGE_KEY } from './core/frecency';
@@ -39,25 +21,27 @@ import welcomeArt from './assets/welcome.webp';
 import { activityStats } from './core/feel';
 import { feedbackOn, setFeedback } from './ui/celebrate';
 
-const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }[] = [
-  { id: 'compress', icon: 'compress', render: compressTool },
-  { id: 'merge', icon: 'merge', render: mergeTool },
-  { id: 'split', icon: 'split', render: splitTool },
-  { id: 'scan', icon: 'scan', render: scanTool },
-  { id: 'idcard', icon: 'idcard', render: idCardTool },
-  { id: 'ocr', icon: 'ocr', render: ocrTool },
-  { id: 'qr', icon: 'qr', render: qrTool },
-  { id: 'organize', icon: 'organize', render: organizeTool },
-  { id: 'sign', icon: 'sign', render: signTool },
-  { id: 'toimage', icon: 'toimage', render: toImageTool },
-  { id: 'toword', icon: 'toword', render: toWordTool },
-  { id: 'numbers', icon: 'numbers', render: pageNumbersTool },
-  { id: 'watermark', icon: 'watermark', render: watermarkTool },
-  { id: 'crop', icon: 'crop', render: cropTool },
-  { id: 'flatten', icon: 'flatten', render: flattenTool },
-  { id: 'redact', icon: 'redact', render: redactTool },
-  { id: 'protect', icon: 'protect', render: protectTool },
-  { id: 'reader', icon: 'reader', render: readerTool },
+type Render = (root: HTMLElement) => void;
+// Each tool is its own chunk, so pdf-lib, pdf.js and OCR load only when a tool opens. The home screen starts fast.
+const TOOLS: { id: string; icon: IconName; load: () => Promise<Render> }[] = [
+  { id: 'compress', icon: 'compress', load: () => import('./tools/compress').then((m) => m.compressTool) },
+  { id: 'merge', icon: 'merge', load: () => import('./tools/merge').then((m) => m.mergeTool) },
+  { id: 'split', icon: 'split', load: () => import('./tools/split').then((m) => m.splitTool) },
+  { id: 'scan', icon: 'scan', load: () => import('./tools/scan').then((m) => m.scanTool) },
+  { id: 'idcard', icon: 'idcard', load: () => import('./tools/idcard').then((m) => m.idCardTool) },
+  { id: 'ocr', icon: 'ocr', load: () => import('./tools/ocr').then((m) => m.ocrTool) },
+  { id: 'qr', icon: 'qr', load: () => import('./tools/qr').then((m) => m.qrTool) },
+  { id: 'organize', icon: 'organize', load: () => import('./tools/organize').then((m) => m.organizeTool) },
+  { id: 'sign', icon: 'sign', load: () => import('./tools/sign').then((m) => m.signTool) },
+  { id: 'toimage', icon: 'toimage', load: () => import('./tools/toimage').then((m) => m.toImageTool) },
+  { id: 'toword', icon: 'toword', load: () => import('./tools/toword').then((m) => m.toWordTool) },
+  { id: 'numbers', icon: 'numbers', load: () => import('./tools/pagenumbers').then((m) => m.pageNumbersTool) },
+  { id: 'watermark', icon: 'watermark', load: () => import('./tools/watermark').then((m) => m.watermarkTool) },
+  { id: 'crop', icon: 'crop', load: () => import('./tools/crop').then((m) => m.cropTool) },
+  { id: 'flatten', icon: 'flatten', load: () => import('./tools/crop').then((m) => m.flattenTool) },
+  { id: 'redact', icon: 'redact', load: () => import('./tools/redact').then((m) => m.redactTool) },
+  { id: 'protect', icon: 'protect', load: () => import('./tools/protect').then((m) => m.protectTool) },
+  { id: 'reader', icon: 'reader', load: () => import('./tools/reader').then((m) => m.readerTool) },
 ];
 
 const app = document.getElementById('app')!;
@@ -332,14 +316,20 @@ function privacyView() {
   return main;
 }
 
+// The camera screen is a chunk too; kept once loaded so stopCamera can run on every route change.
+let camera: typeof import('./tools/camera') | null = null;
+
 function route() {
   const id = location.hash.replace(/^#\/?/, '').split('?')[0];
-  stopCamera();
+  camera?.stopCamera();
   if (id === 'camera') {
     document.title = `${t('qa.scan')} · ${t('appName')}`;
     const root = h('main', { class: 'cam-root' });
     clear(app, root, h('div', { id: 'live', class: 'visually-hidden', 'aria-live': 'polite' }));
-    cameraTool(root);
+    import('./tools/camera').then((m) => {
+      camera = m;
+      if (root.isConnected) m.cameraTool(root);
+    }, () => root.replaceChildren(h('p', { class: 'screen-sub' }, t('loadFailed'))));
     return;
   }
   const tool = TOOLS.find((x) => x.id === id);
@@ -356,7 +346,18 @@ function route() {
       body);
     bar = appbar({ back: true, title: toolName(tool.id), fade: true });
     noteToolUse(tool.id);
-    tool.render(body);
+    body.setAttribute('aria-busy', 'true');
+    tool.load().then(
+      (render) => {
+        body.removeAttribute('aria-busy');
+        if (body.isConnected) render(body);
+      },
+      () => {
+        // Usually a stale chunk after an app update; a reload fetches the new one.
+        body.removeAttribute('aria-busy');
+        body.replaceChildren(h('p', { class: 'screen-sub' }, t('loadFailed')));
+      },
+    );
   } else if (id === 'library') (main = libraryView()), (bar = appbar({ brand: true }));
   else if (id === 'tools') (main = toolsView()), (bar = appbar({ brand: true }));
   else if (id === 'settings') (main = settingsView()), (bar = appbar({ brand: true }));
