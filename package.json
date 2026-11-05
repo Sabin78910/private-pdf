@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
+    "budget": "node scripts/check-budget.mjs 60",
     "android:sync": "npm run build && npx cap sync android",
     "postinstall": "node scripts/copy-ocr-assets.mjs"
   },
