@@ -1,3 +1,5 @@
+import type { FlatPage } from '../core/redact';
+import type { CropMargins } from '../core/crop';
 /// <reference lib="webworker" />
 // Runs pdf-lib operations off the main thread so a 50 MB file never freezes the UI.
 // Cancelling terminates the worker, which discards all in-memory intermediate data.
@@ -14,11 +16,15 @@ export type JobRequest =
   | { op: 'splitEvery'; bytes: Uint8Array; every: number }
   | { op: 'organize'; bytes: Uint8Array; plan: PagePlanItem[] }
   | { op: 'images'; images: ImageInput[]; fit: PageFit }
+  | { op: 'idcard'; images: ImageInput[] }
   | { op: 'compressLossless'; bytes: Uint8Array }
   | { op: 'fillSign'; bytes: Uint8Array; input: FillSignInput }
   | { op: 'pageNumbers'; bytes: Uint8Array; options: PageNumberOptions }
   | { op: 'watermark'; bytes: Uint8Array; options: WatermarkOptions }
   | { op: 'annotate'; bytes: Uint8Array; annotations: Annotation[] }
+  | { op: 'crop'; bytes: Uint8Array; margins: CropMargins }
+  | { op: 'flatten'; bytes: Uint8Array }
+  | { op: 'redact'; bytes: Uint8Array; flat: FlatPage[] }
   | { op: 'protect'; bytes: Uint8Array; password: string }
   | { op: 'pageCount'; bytes: Uint8Array };
 

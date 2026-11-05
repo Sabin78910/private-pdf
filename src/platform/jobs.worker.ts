@@ -3,12 +3,15 @@ import { mergePdfs } from '../core/merge';
 import { extractPages, splitEvery } from '../core/split';
 import { applyPagePlan } from '../core/organize';
 import { imagesToPdf } from '../core/imagesToPdf';
+import { idCardPdf } from '../core/idCard';
 import { compressLossless } from '../core/compress';
 import { fillAndSign } from '../core/fillSign';
 import { loadPdf } from '../core/load';
 import { addPageNumbers } from '../core/pageNumbers';
 import { addWatermark } from '../core/watermark';
 import { protectPdf } from '../core/protect';
+import { applyRedactions } from '../core/redact';
+import { cropPages, flattenForm } from '../core/crop';
 import { addAnnotations } from '../core/annotate';
 import type { JobMessage, JobRequest } from './jobs';
 
@@ -27,6 +30,8 @@ async function run(req: JobRequest): Promise<unknown> {
       return applyPagePlan(req.bytes, req.plan);
     case 'images':
       return imagesToPdf(req.images, req.fit, progress);
+    case 'idcard':
+      return idCardPdf(req.images);
     case 'compressLossless':
       return compressLossless(req.bytes);
     case 'fillSign':
@@ -37,6 +42,12 @@ async function run(req: JobRequest): Promise<unknown> {
       return addWatermark(req.bytes, req.options);
     case 'annotate':
       return addAnnotations(req.bytes, req.annotations);
+    case 'crop':
+      return cropPages(req.bytes, req.margins);
+    case 'flatten':
+      return flattenForm(req.bytes);
+    case 'redact':
+      return applyRedactions(req.bytes, req.flat);
     case 'protect':
       return protectPdf(req.bytes, req.password);
     case 'pageCount':

@@ -20,6 +20,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Startup budget (gzipped JS + CSS on first paint)
+        run: npm run budget
       - name: Browser smoke test (Chromium)
         run: |
           npm i --no-save playwright@1.49.1
@@ -39,8 +41,8 @@ jobs:
         with: { distribution: temurin, java-version: 21 }
       - run: npm ci
       - run: npm run build && npx cap sync android
-      - name: Build debug APK
+      - name: Build debug APK and an unsigned release (checks R8)
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug assembleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with: { name: app-debug-apk, path: android/app/build/outputs/apk/debug/app-debug.apk }

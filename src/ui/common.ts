@@ -1,3 +1,4 @@
+import { getItem, readItem } from '../platform/libraryStore';
 import { h, clear, announce } from './dom';
 import { icon } from './icons';
 import { keepButton } from './libraryView';
@@ -7,6 +8,7 @@ import { formatBytes } from '../core/history';
 import { loadLedger, milestoneReached, recordJob, saveLedger } from '../core/ledger';
 import { countUpValue } from '../core/feel';
 import { progressStep } from '../core/theme';
+import { celebrate } from './celebrate';
 
 /** File picker with drag-and-drop. Validation happens in each tool. */
 export function filePicker(opts: {
@@ -63,7 +65,7 @@ export function filePicker(opts: {
 
 export function errorKey(e: unknown): Key {
   const code = (e as { code?: string })?.code;
-  const known = ['encrypted', 'corrupted', 'empty', 'invalid-range', 'unsupported-image', 'no-input', 'cancelled', 'font-unsupported', 'text-unsupported', 'invalid-password', 'memory'];
+  const known = ['encrypted', 'corrupted', 'empty', 'invalid-range', 'unsupported-image', 'no-input', 'cancelled', 'font-unsupported', 'text-unsupported', 'invalid-password', 'no-form', 'no-text', 'memory'];
   if (code && known.includes(code)) return `err.${code}` as Key;
   if (/memory|allocation/i.test(String((e as Error)?.message))) return 'err.memory';
   return 'err.unknown';
@@ -153,7 +155,7 @@ export class Runner {
       const viewable = pdf || f.mime.startsWith('image/');
       return h('div', { class: 'result' },
         h('div', { class: 'fhead' },
-          h('span', { class: `thumb-doc${pdf ? '' : ' img'}` }, icon(pdf ? 'file' : f.mime === 'application/zip' ? 'folder' : 'toimage', 20)),
+          h('span', { class: `thumb-doc${pdf ? '' : ' img'}` }, icon(pdf ? 'file' : f.mime === 'application/zip' ? 'folder' : f.mime.startsWith('image/') ? 'toimage' : 'file', 20)),
           h('div', { class: 'grow' }, h('strong', {}, f.name), h('span', { class: 'muted small' }, formatBytes(f.bytes.length)))),
         h('div', { class: 'acts' },
           h('button', { class: 'btn primary act-save', onclick: () => saveFile(f).then(() => toast(t('done'))).catch(() => {}) }, icon('download', 18), t('saveDevice')),
@@ -165,6 +167,7 @@ export class Runner {
     tick.innerHTML = '<svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9"/></svg>';
     clear(this.el, h('div', { class: 'card ok pop success' }, tick, h('h3', {}, t('done')), h('p', { class: 'sub' }, t('doneSub')), extra ?? null, cards));
     this.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    celebrate(tick);
   }
 
   fail(e: unknown, retry: () => void) {
@@ -226,4 +229,14 @@ export function toast(msg: string) {
   const el = h('div', { class: 'toast', role: 'status' }, msg);
   document.body.append(el);
   setTimeout(() => el.remove(), 2000);
+}
+
+/** A Library file passed as #/tool?lib=<id>, e.g. from the scanner or Recents. */
+export async function libraryFile(): Promise<File | null> {
+  const id = new URLSearchParams(location.hash.split('?')[1] ?? '').get('lib');
+  if (!id) return null;
+  const it = await getItem(id).catch(() => undefined);
+  if (!it) return null;
+  const f = await readItem(it);
+  return new File([f.bytes], f.name, { type: f.mime });
 }

@@ -5,45 +5,45 @@ import '@fontsource/noto-sans-devanagari/devanagari-700.css';
 import './style.css';
 import { h, clear } from './ui/dom';
 import { initLang, lang, setLang, t, type Key } from './i18n';
-import { history, isNative, ledgerStore } from './platform/files';
+import { canShare, history, isNative, ledgerStore, saveFile, shareFile } from './platform/files';
 import { loadLedger, nextMilestone } from './core/ledger';
 import { formatBytes } from './core/history';
 import { PRIVACY_EN, PRIVACY_NE } from './ui/privacyText';
-import { listItems, libraryAvailable } from './platform/libraryStore';
+import { listItems, libraryAvailable, readItem } from './platform/libraryStore';
 import { viewItems, matchesQuery, type LibraryItem } from './core/library';
 import { initials } from './core/auth';
 import { currentAccount, signIn, signInEnabled, signOut } from './platform/auth';
-import { mergeTool } from './tools/merge';
-import { splitTool } from './tools/split';
-import { compressTool } from './tools/compress';
-import { scanTool } from './tools/scan';
-import { ocrTool } from './tools/ocr';
-import { organizeTool } from './tools/organize';
-import { signTool } from './tools/sign';
-import { toImageTool } from './tools/toimage';
-import { pageNumbersTool } from './tools/pagenumbers';
-import { watermarkTool } from './tools/watermark';
-import { protectTool } from './tools/protect';
-import { readerTool } from './tools/reader';
 import { docThumb, libraryView } from './ui/libraryView';
 import { icon, type IconName } from './ui/icons';
+import { parseUsage, rankTools, recordUse, USAGE_KEY } from './core/frecency';
 import { greeting, matchTool, QUICK_TOOLS, resolveTheme, TOOL_GROUPS, toolHue, type Theme } from './core/theme';
 import { allKeys } from './i18n';
 import welcomeArt from './assets/welcome.webp';
+import { activityStats } from './core/feel';
+import { feedbackOn, setFeedback } from './ui/celebrate';
+import { registerServiceWorker } from './platform/sw';
 
-const TOOLS: { id: string; icon: IconName; render: (root: HTMLElement) => void }[] = [
-  { id: 'compress', icon: 'compress', render: compressTool },
-  { id: 'merge', icon: 'merge', render: mergeTool },
-  { id: 'split', icon: 'split', render: splitTool },
-  { id: 'scan', icon: 'scan', render: scanTool },
-  { id: 'ocr', icon: 'ocr', render: ocrTool },
-  { id: 'organize', icon: 'organize', render: organizeTool },
-  { id: 'sign', icon: 'sign', render: signTool },
-  { id: 'toimage', icon: 'toimage', render: toImageTool },
-  { id: 'numbers', icon: 'numbers', render: pageNumbersTool },
-  { id: 'watermark', icon: 'watermark', render: watermarkTool },
-  { id: 'protect', icon: 'protect', render: protectTool },
-  { id: 'reader', icon: 'reader', render: readerTool },
+type Render = (root: HTMLElement) => void;
+// Each tool is its own chunk, so pdf-lib, pdf.js and OCR load only when a tool opens. The home screen starts fast.
+const TOOLS: { id: string; icon: IconName; load: () => Promise<Render> }[] = [
+  { id: 'compress', icon: 'compress', load: () => import('./tools/compress').then((m) => m.compressTool) },
+  { id: 'merge', icon: 'merge', load: () => import('./tools/merge').then((m) => m.mergeTool) },
+  { id: 'split', icon: 'split', load: () => import('./tools/split').then((m) => m.splitTool) },
+  { id: 'scan', icon: 'scan', load: () => import('./tools/scan').then((m) => m.scanTool) },
+  { id: 'idcard', icon: 'idcard', load: () => import('./tools/idcard').then((m) => m.idCardTool) },
+  { id: 'ocr', icon: 'ocr', load: () => import('./tools/ocr').then((m) => m.ocrTool) },
+  { id: 'qr', icon: 'qr', load: () => import('./tools/qr').then((m) => m.qrTool) },
+  { id: 'organize', icon: 'organize', load: () => import('./tools/organize').then((m) => m.organizeTool) },
+  { id: 'sign', icon: 'sign', load: () => import('./tools/sign').then((m) => m.signTool) },
+  { id: 'toimage', icon: 'toimage', load: () => import('./tools/toimage').then((m) => m.toImageTool) },
+  { id: 'toword', icon: 'toword', load: () => import('./tools/toword').then((m) => m.toWordTool) },
+  { id: 'numbers', icon: 'numbers', load: () => import('./tools/pagenumbers').then((m) => m.pageNumbersTool) },
+  { id: 'watermark', icon: 'watermark', load: () => import('./tools/watermark').then((m) => m.watermarkTool) },
+  { id: 'crop', icon: 'crop', load: () => import('./tools/crop').then((m) => m.cropTool) },
+  { id: 'flatten', icon: 'flatten', load: () => import('./tools/crop').then((m) => m.flattenTool) },
+  { id: 'redact', icon: 'redact', load: () => import('./tools/redact').then((m) => m.redactTool) },
+  { id: 'protect', icon: 'protect', load: () => import('./tools/protect').then((m) => m.protectTool) },
+  { id: 'reader', icon: 'reader', load: () => import('./tools/reader').then((m) => m.readerTool) },
 ];
 
 const app = document.getElementById('app')!;
@@ -96,8 +96,10 @@ function appbar(opts: { title?: string; back?: boolean; brand?: boolean; fade?: 
 
 function tabbar(id: string) {
   return h('nav', { class: 'tabbar', 'aria-label': t('appName') }, h('div', { class: 'tabbar-in' },
-    TABS.map((n) => h('a', { href: `#/${n.id}`, 'aria-current': n.id === id ? 'page' : null },
-      h('span', { class: 'pill' }, icon(n.icon, 22)), t(n.key)))));
+    TABS.flatMap((n, i) => [
+      i === 2 ? h('a', { class: 'fab', href: '#/camera?new', 'aria-label': t('qa.scan') }, h('span', { class: 'fabi' }, icon('camera', 26))) : null,
+      h('a', { href: `#/${n.id}`, 'aria-current': n.id === id ? 'page' : null },
+        h('span', { class: 'pill' }, icon(n.icon, 22)), t(n.key))])));
 }
 
 function accountLink() {
@@ -150,7 +152,38 @@ function fileRow(it: LibraryItem) {
     h('span', { class: 'end' }, icon('chevron', 18))));
 }
 
+/** Share, To Word and View for the newest document, like a scanner's last scan. */
+function recentActions(it: LibraryItem) {
+  if (it.mime !== 'application/pdf') return null;
+  const lib = `?lib=${encodeURIComponent(it.id)}`;
+  const share = async () => {
+    const f = await readItem(it);
+    await (canShare() ? shareFile(f) : saveFile(f)).catch(() => {});
+  };
+  return h('li', { class: 'recent-acts' },
+    h('button', { class: 'btn', onclick: () => void share() }, icon('share', 18), t('share')),
+    h('a', { class: 'btn', href: `#/toword${lib}` }, icon('toword', 18), t('mode.toword')),
+    h('a', { class: 'btn', href: `#/reader${lib}` }, icon('eye', 18), t('qa.view')));
+}
+
 const WELCOME_KEY = 'pdfapp.welcomed';
+
+function readUsage() {
+  try {
+    return parseUsage(localStorage.getItem(USAGE_KEY));
+  } catch {
+    return {};
+  }
+}
+
+/** Counts a tool screen being opened, on this device only, to order Quick tools. */
+function noteToolUse(id: string) {
+  try {
+    localStorage.setItem(USAGE_KEY, JSON.stringify(recordUse(readUsage(), id, Date.now())));
+  } catch {
+    /* storage blocked: Quick tools keep the default order */
+  }
+}
 
 /** First-launch card; hidden for good once dismissed. */
 function welcomeCard() {
@@ -160,7 +193,7 @@ function welcomeCard() {
     /* storage blocked: show it, dismissing still hides it for this visit */
   }
   const card = h('section', { class: 'card welcome', 'aria-labelledby': 'welcomeTitle' },
-    h('img', { class: 'art', src: welcomeArt, alt: '', width: 560, height: 431, decoding: 'async' }),
+    h('img', { class: 'art', src: welcomeArt, alt: '', width: 560, height: 431, decoding: 'async', fetchpriority: 'high' }),
     h('h2', { id: 'welcomeTitle' }, t('welcome.title')),
     h('p', {}, t('welcome.body')),
     h('button', { class: 'btn primary', id: 'welcomeOk', onclick: () => {
@@ -192,6 +225,15 @@ function ledgerCard() {
       h('p', {}, l.jobs ? t('ledger.next', { n: next.target - l.jobs }) : t('ledger.first'))) : null);
 }
 
+/** Small, honest progress badges from local history. Hidden until there is something to show. */
+function statsRow() {
+  const { week, streak } = activityStats(history.list(), Date.now());
+  if (!week && !streak) return null;
+  return h('div', { class: 'stats', role: 'status' },
+    week ? h('span', { class: 'stat' }, icon('check', 16), h('strong', {}, String(week)), t('stats.week')) : null,
+    streak > 1 ? h('span', { class: 'stat' }, icon('star', 16), h('strong', {}, String(streak)), t('stats.streak')) : null);
+}
+
 function home() {
   const results = h('div');
   const sections = h('div');
@@ -201,7 +243,7 @@ function home() {
     void listItems().then((all) => {
       items = all;
       const top = viewItems(all, { kind: 'recent' }).slice(0, 4);
-      if (top.length) clear(recent, top.map(fileRow));
+      if (top.length) clear(recent, top.map(fileRow), recentActions(top[0]));
     }).catch(() => {});
   const search = h('input', { type: 'search', id: 'homeSearch', placeholder: t('searchAll'), 'aria-label': t('searchAll'), oninput: () => {
     const q = search.value.trim();
@@ -216,13 +258,13 @@ function home() {
   } });
   clear(sections,
     h('div', { class: 'actions2' },
-      h('a', { class: 'qa main', href: '#/scan' }, h('span', { class: 'qi' }, icon('scan', 24)),
+      h('a', { class: 'qa main', href: '#/camera?new' }, h('span', { class: 'qi' }, icon('scan', 24)),
         h('span', {}, h('strong', {}, t('qa.scan')), h('span', { class: 's' }, t('qa.scan.desc')))),
       h('a', { class: 'qa', href: '#/reader' }, h('span', { class: 'qi' }, icon('reader', 24)),
         h('span', {}, h('strong', {}, t('qa.open')), h('span', { class: 's' }, t('qa.open.desc'))))),
     h('section', { class: 'section' },
       h('div', { class: 'section-head' }, h('h2', {}, t('quickTools')), h('a', { href: '#/tools' }, t('allTools'))),
-      h('ul', { class: 'tgrid' }, QUICK_TOOLS.map(toolTile))),
+      h('ul', { class: 'tgrid' }, rankTools(QUICK_TOOLS, readUsage(), Date.now(), TOOLS.map((x) => x.id)).map(toolTile))),
     h('section', { class: 'section' },
       h('div', { class: 'section-head' }, h('h2', {}, t('recent')), h('a', { href: '#/library' }, t('seeAll'))),
       recent));
@@ -231,6 +273,7 @@ function home() {
       h('p', {}, icon('shield', 16), t('homeSub'))),
     welcomeCard(),
     ledgerCard(),
+    statsRow(),
     h('label', { class: 'searchbox' }, icon('search', 20), search),
     sections, results,
     h('p', { class: 'trust' }, icon('lock', 16), t('aboutBody')));
@@ -265,6 +308,8 @@ function settingsView() {
     segmented('theme', 'appearance', [['dark', t('theme.dark')], ['light', t('theme.light')]], theme, (v) => (applyTheme(v), route())),
     h('div', { class: 'caption-label', style: 'margin-top:24px' }, t('languageLabel')),
     segmented('lang', 'languageLabel', [['en', 'English'], ['ne', 'नेपाली']], lang(), (v) => (setLang(v), route())),
+    h('div', { class: 'caption-label', style: 'margin-top:24px' }, t('feedback')),
+    segmented('feedback', 'feedback', [['on', t('feedback.on')], ['off', t('feedback.off')]], feedbackOn() ? 'on' : 'off', (v) => (setFeedback(v === 'on'), route())),
     h('div', { class: 'caption-label', style: 'margin-top:24px' }, t('about')),
     h('div', { class: 'group' },
       signInEnabled() ? settingsRow('#/account', 'device', t('account'), a ? a.email : t('signIn')) : null,
@@ -291,8 +336,22 @@ function privacyView() {
   return main;
 }
 
+// The camera screen is a chunk too; kept once loaded so stopCamera can run on every route change.
+let camera: typeof import('./tools/camera') | null = null;
+
 function route() {
   const id = location.hash.replace(/^#\/?/, '').split('?')[0];
+  camera?.stopCamera();
+  if (id === 'camera') {
+    document.title = `${t('qa.scan')} · ${t('appName')}`;
+    const root = h('main', { class: 'cam-root' });
+    clear(app, root, h('div', { id: 'live', class: 'visually-hidden', 'aria-live': 'polite' }));
+    import('./tools/camera').then((m) => {
+      camera = m;
+      if (root.isConnected) m.cameraTool(root);
+    }, () => root.replaceChildren(h('p', { class: 'screen-sub' }, t('loadFailed'))));
+    return;
+  }
   const tool = TOOLS.find((x) => x.id === id);
   const isTab = TABS.some((x) => x.id === id);
   if (isTab) lastTab = id as Tab;
@@ -306,7 +365,19 @@ function route() {
       h('p', { class: 'screen-sub' }, t(`tool.${tool.id}.desc` as Key)),
       body);
     bar = appbar({ back: true, title: toolName(tool.id), fade: true });
-    tool.render(body);
+    noteToolUse(tool.id);
+    body.setAttribute('aria-busy', 'true');
+    tool.load().then(
+      (render) => {
+        body.removeAttribute('aria-busy');
+        if (body.isConnected) render(body);
+      },
+      () => {
+        // Usually a stale chunk after an app update; a reload fetches the new one.
+        body.removeAttribute('aria-busy');
+        body.replaceChildren(h('p', { class: 'screen-sub' }, t('loadFailed')));
+      },
+    );
   } else if (id === 'library') (main = libraryView()), (bar = appbar({ brand: true }));
   else if (id === 'tools') (main = toolsView()), (bar = appbar({ brand: true }));
   else if (id === 'settings') (main = settingsView()), (bar = appbar({ brand: true }));
@@ -325,5 +396,8 @@ window.addEventListener('scroll', () => document.querySelector('.appbar')?.class
 
 initLang();
 initTheme();
+// The Android app opens straight into the camera, like a pocket scanner.
+if (isNative() && !location.hash.replace(/^#\/?/, '')) window.history.replaceState(null, '', '#/camera?new');
 window.addEventListener('hashchange', route);
 route();
+registerServiceWorker(import.meta.env.PROD, isNative(), 'serviceWorker' in navigator ? navigator.serviceWorker : undefined);
