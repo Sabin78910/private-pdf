@@ -20,6 +20,7 @@ import { allKeys } from './i18n';
 import welcomeArt from './assets/welcome.webp';
 import { activityStats } from './core/feel';
 import { feedbackOn, setFeedback } from './ui/celebrate';
+import { registerServiceWorker } from './platform/sw';
 
 type Render = (root: HTMLElement) => void;
 // Each tool is its own chunk, so pdf-lib, pdf.js and OCR load only when a tool opens. The home screen starts fast.
@@ -380,3 +381,4 @@ initTheme();
 if (isNative() && !location.hash.replace(/^#\/?/, '')) window.history.replaceState(null, '', '#/camera?new');
 window.addEventListener('hashchange', route);
 route();
+registerServiceWorker(import.meta.env.PROD, isNative(), 'serviceWorker' in navigator ? navigator.serviceWorker : undefined);
