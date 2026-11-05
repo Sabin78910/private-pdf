@@ -21,32 +21,27 @@ import welcomeArt from './assets/welcome.webp';
 import { activityStats } from './core/feel';
 import { feedbackOn, setFeedback } from './ui/celebrate';
 
-type Render = (root: HTMLElement) => void | Promise<void>;
-/** Tool screens (and pdf-lib, pdf.js, tesseract behind them) load on first open, not at startup. */
-function lazy<K extends string>(load: () => Promise<Record<K, unknown>>, name: K): Render {
-  return async (root) => (((await load())[name]) as (r: HTMLElement) => void)(root);
-}
-let stopCamera = () => {};
-
-const TOOLS: { id: string; icon: IconName; render: Render }[] = [
-  { id: 'compress', icon: 'compress', render: lazy(() => import('./tools/compress'), 'compressTool') },
-  { id: 'merge', icon: 'merge', render: lazy(() => import('./tools/merge'), 'mergeTool') },
-  { id: 'split', icon: 'split', render: lazy(() => import('./tools/split'), 'splitTool') },
-  { id: 'scan', icon: 'scan', render: lazy(() => import('./tools/scan'), 'scanTool') },
-  { id: 'idcard', icon: 'idcard', render: lazy(() => import('./tools/idcard'), 'idCardTool') },
-  { id: 'ocr', icon: 'ocr', render: lazy(() => import('./tools/ocr'), 'ocrTool') },
-  { id: 'qr', icon: 'qr', render: lazy(() => import('./tools/qr'), 'qrTool') },
-  { id: 'organize', icon: 'organize', render: lazy(() => import('./tools/organize'), 'organizeTool') },
-  { id: 'sign', icon: 'sign', render: lazy(() => import('./tools/sign'), 'signTool') },
-  { id: 'toimage', icon: 'toimage', render: lazy(() => import('./tools/toimage'), 'toImageTool') },
-  { id: 'toword', icon: 'toword', render: lazy(() => import('./tools/toword'), 'toWordTool') },
-  { id: 'numbers', icon: 'numbers', render: lazy(() => import('./tools/pagenumbers'), 'pageNumbersTool') },
-  { id: 'watermark', icon: 'watermark', render: lazy(() => import('./tools/watermark'), 'watermarkTool') },
-  { id: 'crop', icon: 'crop', render: lazy(() => import('./tools/crop'), 'cropTool') },
-  { id: 'flatten', icon: 'flatten', render: lazy(() => import('./tools/crop'), 'flattenTool') },
-  { id: 'redact', icon: 'redact', render: lazy(() => import('./tools/redact'), 'redactTool') },
-  { id: 'protect', icon: 'protect', render: lazy(() => import('./tools/protect'), 'protectTool') },
-  { id: 'reader', icon: 'reader', render: lazy(() => import('./tools/reader'), 'readerTool') },
+type Render = (root: HTMLElement) => void;
+// Each tool is its own chunk, so pdf-lib, pdf.js and OCR load only when a tool opens. The home screen starts fast.
+const TOOLS: { id: string; icon: IconName; load: () => Promise<Render> }[] = [
+  { id: 'compress', icon: 'compress', load: () => import('./tools/compress').then((m) => m.compressTool) },
+  { id: 'merge', icon: 'merge', load: () => import('./tools/merge').then((m) => m.mergeTool) },
+  { id: 'split', icon: 'split', load: () => import('./tools/split').then((m) => m.splitTool) },
+  { id: 'scan', icon: 'scan', load: () => import('./tools/scan').then((m) => m.scanTool) },
+  { id: 'idcard', icon: 'idcard', load: () => import('./tools/idcard').then((m) => m.idCardTool) },
+  { id: 'ocr', icon: 'ocr', load: () => import('./tools/ocr').then((m) => m.ocrTool) },
+  { id: 'qr', icon: 'qr', load: () => import('./tools/qr').then((m) => m.qrTool) },
+  { id: 'organize', icon: 'organize', load: () => import('./tools/organize').then((m) => m.organizeTool) },
+  { id: 'sign', icon: 'sign', load: () => import('./tools/sign').then((m) => m.signTool) },
+  { id: 'toimage', icon: 'toimage', load: () => import('./tools/toimage').then((m) => m.toImageTool) },
+  { id: 'toword', icon: 'toword', load: () => import('./tools/toword').then((m) => m.toWordTool) },
+  { id: 'numbers', icon: 'numbers', load: () => import('./tools/pagenumbers').then((m) => m.pageNumbersTool) },
+  { id: 'watermark', icon: 'watermark', load: () => import('./tools/watermark').then((m) => m.watermarkTool) },
+  { id: 'crop', icon: 'crop', load: () => import('./tools/crop').then((m) => m.cropTool) },
+  { id: 'flatten', icon: 'flatten', load: () => import('./tools/crop').then((m) => m.flattenTool) },
+  { id: 'redact', icon: 'redact', load: () => import('./tools/redact').then((m) => m.redactTool) },
+  { id: 'protect', icon: 'protect', load: () => import('./tools/protect').then((m) => m.protectTool) },
+  { id: 'reader', icon: 'reader', load: () => import('./tools/reader').then((m) => m.readerTool) },
 ];
 
 const app = document.getElementById('app')!;
@@ -321,17 +316,20 @@ function privacyView() {
   return main;
 }
 
+// The camera screen is a chunk too; kept once loaded so stopCamera can run on every route change.
+let camera: typeof import('./tools/camera') | null = null;
+
 function route() {
   const id = location.hash.replace(/^#\/?/, '').split('?')[0];
-  stopCamera();
+  camera?.stopCamera();
   if (id === 'camera') {
     document.title = `${t('qa.scan')} · ${t('appName')}`;
     const root = h('main', { class: 'cam-root' });
     clear(app, root, h('div', { id: 'live', class: 'visually-hidden', 'aria-live': 'polite' }));
-    void import('./tools/camera').then((m) => {
-      stopCamera = m.stopCamera;
+    import('./tools/camera').then((m) => {
+      camera = m;
       if (root.isConnected) m.cameraTool(root);
-    });
+    }, () => root.replaceChildren(h('p', { class: 'screen-sub' }, t('loadFailed'))));
     return;
   }
   const tool = TOOLS.find((x) => x.id === id);
@@ -348,7 +346,18 @@ function route() {
       body);
     bar = appbar({ back: true, title: toolName(tool.id), fade: true });
     noteToolUse(tool.id);
-    void tool.render(body);
+    body.setAttribute('aria-busy', 'true');
+    tool.load().then(
+      (render) => {
+        body.removeAttribute('aria-busy');
+        if (body.isConnected) render(body);
+      },
+      () => {
+        // Usually a stale chunk after an app update; a reload fetches the new one.
+        body.removeAttribute('aria-busy');
+        body.replaceChildren(h('p', { class: 'screen-sub' }, t('loadFailed')));
+      },
+    );
   } else if (id === 'library') (main = libraryView()), (bar = appbar({ brand: true }));
   else if (id === 'tools') (main = toolsView()), (bar = appbar({ brand: true }));
   else if (id === 'settings') (main = settingsView()), (bar = appbar({ brand: true }));
