@@ -31,6 +31,7 @@ import { cropTool, flattenTool } from './tools/crop';
 import { readerTool } from './tools/reader';
 import { docThumb, libraryView } from './ui/libraryView';
 import { icon, type IconName } from './ui/icons';
+import { parseUsage, rankTools, recordUse, USAGE_KEY } from './core/frecency';
 import { greeting, matchTool, QUICK_TOOLS, resolveTheme, TOOL_GROUPS, toolHue, type Theme } from './core/theme';
 import { allKeys } from './i18n';
 import welcomeArt from './assets/welcome.webp';
@@ -164,6 +165,23 @@ function fileRow(it: LibraryItem) {
 
 const WELCOME_KEY = 'pdfapp.welcomed';
 
+function readUsage() {
+  try {
+    return parseUsage(localStorage.getItem(USAGE_KEY));
+  } catch {
+    return {};
+  }
+}
+
+/** Counts a tool screen being opened, on this device only, to order Quick tools. */
+function noteToolUse(id: string) {
+  try {
+    localStorage.setItem(USAGE_KEY, JSON.stringify(recordUse(readUsage(), id, Date.now())));
+  } catch {
+    /* storage blocked: Quick tools keep the default order */
+  }
+}
+
 /** First-launch card; hidden for good once dismissed. */
 function welcomeCard() {
   try {
@@ -226,7 +244,7 @@ function home() {
         h('span', {}, h('strong', {}, t('qa.open')), h('span', { class: 's' }, t('qa.open.desc'))))),
     h('section', { class: 'section' },
       h('div', { class: 'section-head' }, h('h2', {}, t('quickTools')), h('a', { href: '#/tools' }, t('allTools'))),
-      h('ul', { class: 'tgrid' }, QUICK_TOOLS.map(toolTile))),
+      h('ul', { class: 'tgrid' }, rankTools(QUICK_TOOLS, readUsage(), Date.now(), TOOLS.map((x) => x.id)).map(toolTile))),
     h('section', { class: 'section' },
       h('div', { class: 'section-head' }, h('h2', {}, t('recent')), h('a', { href: '#/library' }, t('seeAll'))),
       recent));
@@ -312,6 +330,7 @@ function route() {
       h('p', { class: 'screen-sub' }, t(`tool.${tool.id}.desc` as Key)),
       body);
     bar = appbar({ back: true, title: toolName(tool.id), fade: true });
+    noteToolUse(tool.id);
     tool.render(body);
   } else if (id === 'library') (main = libraryView()), (bar = appbar({ brand: true }));
   else if (id === 'tools') (main = toolsView()), (bar = appbar({ brand: true }));
