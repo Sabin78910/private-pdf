@@ -1,3 +1,4 @@
+import { getItem, readItem } from '../platform/libraryStore';
 import { h, clear, announce } from './dom';
 import { icon } from './icons';
 import { keepButton } from './libraryView';
@@ -222,4 +223,14 @@ export function toast(msg: string) {
   const el = h('div', { class: 'toast', role: 'status' }, msg);
   document.body.append(el);
   setTimeout(() => el.remove(), 2000);
+}
+
+/** A Library file passed as #/tool?lib=<id>, e.g. from the scanner or Recents. */
+export async function libraryFile(): Promise<File | null> {
+  const id = new URLSearchParams(location.hash.split('?')[1] ?? '').get('lib');
+  if (!id) return null;
+  const it = await getItem(id).catch(() => undefined);
+  if (!it) return null;
+  const f = await readItem(it);
+  return new File([f.bytes], f.name, { type: f.mime });
 }

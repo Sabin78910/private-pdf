@@ -1,7 +1,7 @@
 import { h, clear } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { t } from '../i18n';
-import { Runner, filePicker, isPdfFile } from '../ui/common';
+import { Runner, filePicker, isPdfFile, libraryFile } from '../ui/common';
 import { readFile } from '../platform/files';
 import { canvasToBytes, openPdf, type PdfJsDoc } from '../platform/render';
 import { runJob } from '../platform/jobs';
@@ -225,4 +225,5 @@ export function signTool(root: HTMLElement) {
     );
 
   clear(root, filePicker({ accept: 'application/pdf,.pdf', label: 'choosePdf', onFiles: (fs) => fs.filter(isPdfFile)[0] && load(fs.filter(isPdfFile)[0]) }), body, runner.el);
+  void libraryFile().then((f) => f && load(f));
 }

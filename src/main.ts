@@ -5,10 +5,10 @@ import '@fontsource/noto-sans-devanagari/devanagari-700.css';
 import './style.css';
 import { h, clear } from './ui/dom';
 import { initLang, lang, setLang, t, type Key } from './i18n';
-import { history, isNative } from './platform/files';
+import { canShare, history, isNative, saveFile, shareFile } from './platform/files';
 import { formatBytes } from './core/history';
 import { PRIVACY_EN, PRIVACY_NE } from './ui/privacyText';
-import { listItems, libraryAvailable } from './platform/libraryStore';
+import { listItems, libraryAvailable, readItem } from './platform/libraryStore';
 import { viewItems, matchesQuery, type LibraryItem } from './core/library';
 import { initials } from './core/auth';
 import { currentAccount, signIn, signInEnabled, signOut } from './platform/auth';
@@ -94,8 +94,10 @@ function appbar(opts: { title?: string; back?: boolean; brand?: boolean; fade?: 
 
 function tabbar(id: string) {
   return h('nav', { class: 'tabbar', 'aria-label': t('appName') }, h('div', { class: 'tabbar-in' },
-    TABS.map((n) => h('a', { href: `#/${n.id}`, 'aria-current': n.id === id ? 'page' : null },
-      h('span', { class: 'pill' }, icon(n.icon, 22)), t(n.key)))));
+    TABS.flatMap((n, i) => [
+      i === 2 ? h('a', { class: 'fab', href: '#/camera?new', 'aria-label': t('qa.scan') }, h('span', { class: 'fabi' }, icon('camera', 26))) : null,
+      h('a', { href: `#/${n.id}`, 'aria-current': n.id === id ? 'page' : null },
+        h('span', { class: 'pill' }, icon(n.icon, 22)), t(n.key))])));
 }
 
 function accountLink() {
@@ -146,6 +148,20 @@ function fileRow(it: LibraryItem) {
     docThumb(it),
     h('span', { class: 'grow' }, h('span', { class: 't' }, it.name), h('span', { class: 'm' }, `${formatBytes(it.size)} · ${when(it.openedAt)}`)),
     h('span', { class: 'end' }, icon('chevron', 18))));
+}
+
+/** Share, To Word and View for the newest document, like a scanner's last scan. */
+function recentActions(it: LibraryItem) {
+  if (it.mime !== 'application/pdf') return null;
+  const lib = `?lib=${encodeURIComponent(it.id)}`;
+  const share = async () => {
+    const f = await readItem(it);
+    await (canShare() ? shareFile(f) : saveFile(f)).catch(() => {});
+  };
+  return h('li', { class: 'recent-acts' },
+    h('button', { class: 'btn', onclick: () => void share() }, icon('share', 18), t('share')),
+    h('a', { class: 'btn', href: `#/toword${lib}` }, icon('toword', 18), t('mode.toword')),
+    h('a', { class: 'btn', href: `#/reader${lib}` }, icon('eye', 18), t('qa.view')));
 }
 
 const WELCOME_KEY = 'pdfapp.welcomed';
@@ -208,7 +224,7 @@ function home() {
     void listItems().then((all) => {
       items = all;
       const top = viewItems(all, { kind: 'recent' }).slice(0, 4);
-      if (top.length) clear(recent, top.map(fileRow));
+      if (top.length) clear(recent, top.map(fileRow), recentActions(top[0]));
     }).catch(() => {});
   const search = h('input', { type: 'search', id: 'homeSearch', placeholder: t('searchAll'), 'aria-label': t('searchAll'), oninput: () => {
     const q = search.value.trim();
@@ -223,7 +239,7 @@ function home() {
   } });
   clear(sections,
     h('div', { class: 'actions2' },
-      h('a', { class: 'qa main', href: '#/scan' }, h('span', { class: 'qi' }, icon('scan', 24)),
+      h('a', { class: 'qa main', href: '#/camera?new' }, h('span', { class: 'qi' }, icon('scan', 24)),
         h('span', {}, h('strong', {}, t('qa.scan')), h('span', { class: 's' }, t('qa.scan.desc')))),
       h('a', { class: 'qa', href: '#/reader' }, h('span', { class: 'qi' }, icon('reader', 24)),
         h('span', {}, h('strong', {}, t('qa.open')), h('span', { class: 's' }, t('qa.open.desc'))))),
@@ -300,8 +316,22 @@ function privacyView() {
   return main;
 }
 
+// The camera screen is a chunk too; kept once loaded so stopCamera can run on every route change.
+let camera: typeof import('./tools/camera') | null = null;
+
 function route() {
   const id = location.hash.replace(/^#\/?/, '').split('?')[0];
+  camera?.stopCamera();
+  if (id === 'camera') {
+    document.title = `${t('qa.scan')} · ${t('appName')}`;
+    const root = h('main', { class: 'cam-root' });
+    clear(app, root, h('div', { id: 'live', class: 'visually-hidden', 'aria-live': 'polite' }));
+    import('./tools/camera').then((m) => {
+      camera = m;
+      if (root.isConnected) m.cameraTool(root);
+    }, () => root.replaceChildren(h('p', { class: 'screen-sub' }, t('loadFailed'))));
+    return;
+  }
   const tool = TOOLS.find((x) => x.id === id);
   const isTab = TABS.some((x) => x.id === id);
   if (isTab) lastTab = id as Tab;
@@ -346,5 +376,7 @@ window.addEventListener('scroll', () => document.querySelector('.appbar')?.class
 
 initLang();
 initTheme();
+// The Android app opens straight into the camera, like a pocket scanner.
+if (isNative() && !location.hash.replace(/^#\/?/, '')) window.history.replaceState(null, '', '#/camera?new');
 window.addEventListener('hashchange', route);
 route();
