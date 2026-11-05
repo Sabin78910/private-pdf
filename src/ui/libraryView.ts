@@ -17,8 +17,9 @@ const pendingThumbs = new WeakMap<Element, LibraryItem>();
 async function drawThumb(it: LibraryItem, el: HTMLElement) {
   let url = thumbCache.get(it.id);
   if (!url) {
-    const { openPdf, thumbnail } = await import('../platform/render'); // keeps pdf.js out of the startup bundle
-    const doc = await openPdf((await store.readItem(it, false)).bytes);
+    // pdf.js stays out of the startup bundle: fetch it and the file at the same time.
+    const [{ openPdf, thumbnail }, file] = await Promise.all([import('../platform/render'), store.readItem(it, false)]);
+    const doc = await openPdf(file.bytes);
     try {
       url = (await thumbnail(doc, 0, 40)).toDataURL('image/jpeg', 0.75);
     } finally {
@@ -35,6 +36,13 @@ export function docThumb(it: LibraryItem): HTMLElement {
   const pdf = it.mime === 'application/pdf';
   const el = h('span', { class: `thumb-doc${pdf ? '' : ' img'}`, 'aria-hidden': 'true' }, icon(pdf ? 'file' : 'toimage', 20));
   if (!pdf || typeof IntersectionObserver === 'undefined') return el;
+  const cached = thumbCache.get(it.id);
+  if (cached) {
+    // A re-render (search, filter) shows the preview at once instead of flashing the icon.
+    el.replaceChildren(h('img', { src: cached, alt: '' }));
+    el.classList.add('has-img');
+    return el;
+  }
   thumbObserver ??= new IntersectionObserver((entries) => {
     for (const en of entries) {
       const item = en.isIntersecting ? pendingThumbs.get(en.target) : undefined;
