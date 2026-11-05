@@ -53,7 +53,7 @@ let theme: Theme = 'dark';
 function applyTheme(next: Theme) {
   theme = next;
   document.documentElement.dataset.theme = next;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0b0f17' : '#f6f7f9');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0a0a0b' : '#f6f6f2');
   try {
     localStorage.setItem('pdfapp.theme', next);
   } catch {
