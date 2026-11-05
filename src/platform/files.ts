@@ -82,3 +82,14 @@ function pickStore(): KeyValueStore {
   }
 }
 export const history = new History(pickStore());
+
+/** Lifetime counters (no names or content), kept in localStorage on web and Android alike. */
+export const ledgerStore: KeyValueStore = (() => {
+  try {
+    localStorage.setItem('pdfapp.probe', '1');
+    localStorage.removeItem('pdfapp.probe');
+    return localStorage;
+  } catch {
+    return new MemoryStore();
+  }
+})();

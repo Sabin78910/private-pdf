@@ -5,7 +5,8 @@ import '@fontsource/noto-sans-devanagari/devanagari-700.css';
 import './style.css';
 import { h, clear } from './ui/dom';
 import { initLang, lang, setLang, t, type Key } from './i18n';
-import { canShare, history, isNative, saveFile, shareFile } from './platform/files';
+import { canShare, history, isNative, ledgerStore, saveFile, shareFile } from './platform/files';
+import { loadLedger, nextMilestone } from './core/ledger';
 import { formatBytes } from './core/history';
 import { PRIVACY_EN, PRIVACY_NE } from './ui/privacyText';
 import { listItems, libraryAvailable, readItem } from './platform/libraryStore';
@@ -52,7 +53,7 @@ let theme: Theme = 'dark';
 function applyTheme(next: Theme) {
   theme = next;
   document.documentElement.dataset.theme = next;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0b0f17' : '#f6f7f9');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0a0a0b' : '#f6f6f2');
   try {
     localStorage.setItem('pdfapp.theme', next);
   } catch {
@@ -207,6 +208,23 @@ function welcomeCard() {
   return card;
 }
 
+/** Lifetime record of work done locally: visible progress towards the next milestone, and 0 uploads. */
+function ledgerCard() {
+  const l = loadLedger(ledgerStore);
+  const next = nextMilestone(l.jobs);
+  const stat = (value: string, label: Key, cls = '') => h('div', { class: `lstat${cls}` }, h('strong', {}, value), h('span', {}, t(label)));
+  return h('section', { class: 'ledger', 'aria-label': t('ledger.title') },
+    h('div', { class: 'ledger-head' }, icon('shield', 18), h('span', {}, t('ledger.title'))),
+    h('div', { class: 'lstats' },
+      stat(String(l.jobs), 'ledger.jobs'),
+      stat(formatBytes(l.saved), 'ledger.saved'),
+      stat('0', 'ledger.uploads', ' zero')),
+    next ? h('div', { class: 'lnext' },
+      h('div', { class: 'lbar', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': next.target, 'aria-valuenow': l.jobs, 'aria-label': t('ledger.next', { n: next.target - l.jobs }) },
+        h('i', { style: `width:${Math.max(4, Math.round(next.progress * 100))}%` })),
+      h('p', {}, l.jobs ? t('ledger.next', { n: next.target - l.jobs }) : t('ledger.first'))) : null);
+}
+
 /** Small, honest progress badges from local history. Hidden until there is something to show. */
 function statsRow() {
   const { week, streak } = activityStats(history.list(), Date.now());
@@ -254,6 +272,7 @@ function home() {
     h('div', { class: 'largetitle' }, h('h1', {}, t(`greet.${greeting(new Date().getHours())}` as Key)),
       h('p', {}, icon('shield', 16), t('homeSub'))),
     welcomeCard(),
+    ledgerCard(),
     statsRow(),
     h('label', { class: 'searchbox' }, icon('search', 20), search),
     sections, results,

@@ -116,7 +116,7 @@ export function compressTool(root: HTMLElement) {
           : h('div', {},
               h('p', { class: 'saved' }, t('youSaved'), ' ', countUp(saved, formatBytes)),
               h('p', { class: 'muted' }, t('sizeResult', { orig: formatBytes(best.originalSize), out: formatBytes(best.compressedSize), pct: best.savedPercent })));
-        return { files: [{ name: outputName(file!.name, 'compressed'), bytes: r.bytes, mime: 'application/pdf' }], inputs: [file!.name], extra };
+        return { files: [{ name: outputName(file!.name, 'compressed'), bytes: r.bytes, mime: 'application/pdf' }], inputs: [file!.name], extra, saved: r.notSmaller ? 0 : saved };
       },
       start,
     );

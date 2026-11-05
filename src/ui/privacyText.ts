@@ -8,6 +8,7 @@ store, log or read the content of your files. There is no account, no ads and no
 <li>Your files and every result. Results are saved as new files; your original is never overwritten.</li>
 <li>Job history: only the tool name, file names, sizes and time. On Android it is kept on the device;
 on the web it is kept for the current browser session only. You can clear it at any time.</li>
+<li>Totals on Home: three numbers only (jobs done, bytes saved by compression, files uploaded, which is always 0), kept on the device.</li>
 <li>Your Library: files you choose to keep, with their folders and favorites, are stored in the app's private
 storage on this device (browser storage on the web). Delete any of them at any time.</li>
 <li>Your language and theme choice.</li>
@@ -36,6 +37,7 @@ export const PRIVACY_NE = `
 <ul>
 <li>तपाईंका फाइल र सबै नतिजा। नतिजा नयाँ फाइलमा बस्छ; मूल फाइल कहिल्यै बदलिँदैन।</li>
 <li>कामको इतिहास: उपकरणको नाम, फाइलको नाम, आकार र समय मात्र। एन्ड्रोइडमा उपकरणमै रहन्छ; वेबमा हालको ब्राउजर सत्रसम्म मात्र। जुनसुकै बेला मेटाउन सकिन्छ।</li>
+<li>गृहपृष्ठका जम्मा संख्या: तीन अंक मात्र (गरिएका काम, कम्प्रेसले बचाएको आकार, अपलोड गरिएका फाइल, जुन सधैं ० हुन्छ), उपकरणमै रहन्छ।</li>
 <li>तपाईंको लाइब्रेरी: तपाईंले राख्न रोजेका फाइल, फोल्डर र मनपर्ने सूची यही उपकरणको एपभित्रको निजी भण्डारमा (वेबमा ब्राउजर भण्डारमा) रहन्छन्। जुनसुकै बेला मेटाउन सकिन्छ।</li>
 <li>तपाईंले रोजेको भाषा र थिम।</li>
 </ul>

@@ -3,15 +3,18 @@
 Private PDF uses one set of tokens in `src/style.css`. Dark is the default theme, and
 `:root[data-theme='light']` switches to light. `tests/styles.test.ts` fails if a rule is left unclosed.
 
-## Colour
+## Colour ("Graphite & Signal")
+
+Neutral graphite surfaces with no blue cast, and one signal colour. Dark pairs lime on graphite; light flips
+to ink buttons with lime text, so the main action is unmistakable in both themes.
 
 | Token | Dark | Light | Use |
 | --- | --- | --- | --- |
-| `--bg` | #0b0f17 | #f6f7f9 | Page background |
-| `--surface` / `-2` / `-3` | #121826 / #1a2232 / #222b3d | white and greys | Cards, inputs, selected states |
-| `--line` | #263044 | grey | Hairlines and dividers |
-| `--primary` | #2dd4bf (teal) | #0f766e | Main action, focus, selected items |
-| `--accent` | #818cf8 (indigo) | #4f46e5 | Focus rings, secondary emphasis |
+| `--bg` | #0a0a0b | #f6f6f2 (paper) | Page background |
+| `--surface` / `-2` / `-3` | #141416 / #1c1c1f / #27272b | white, #efefea, #e5e5df | Cards, inputs, selected states |
+| `--line` | #2a2a2f | #e2e2dc | Hairlines and dividers |
+| `--primary` / `--on-primary` | #d4ff3a (signal lime) / #0a0a0b | #0a0a0b (ink) / #d4ff3a | Main action, selected items |
+| `--accent` | #a78bfa (violet) | #5b3fd6 | Links, focus rings, secondary emphasis |
 | `--success` `--danger` `--warning` | green, red, amber | darker shades | Status only |
 
 Each tool gets a hue (`toolHue` in `src/core/theme.ts`) for its icon tile. A hue is used only on icons, never on text.
@@ -19,12 +22,12 @@ Each tool gets a hue (`toolHue` in `src/core/theme.ts`) for its icon tile. A hue
 ## Type
 
 Inter (Latin) and Noto Sans Devanagari (Nepali) are bundled locally, because the CSP allows fonts only from `'self'`.
-Large titles are 32/38 bold, screen titles 22/28, body 16/24, captions 13/18 in upper case with letter spacing.
+Large titles are 36/40 at weight 760 with -0.035em tracking, screen titles 22/28, body 16/24, captions 13/18 in upper case with letter spacing.
 
 ## Layout
 
 - The base grid is 4px. Screens have a 16px gutter, and content is at most 720px wide.
-- Radii: 10px for inputs, 12px for controls, 16px for cards, 24px for sheets.
+- Radii: 12px for inputs, 14px for controls, 20px for cards, 28px for sheets.
 - Touch targets are at least 44px.
 
 ## Patterns

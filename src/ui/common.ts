@@ -3,8 +3,9 @@ import { h, clear, announce } from './dom';
 import { icon } from './icons';
 import { keepButton } from './libraryView';
 import { t, type Key } from '../i18n';
-import { canShare, history, previewUrl, saveFile, shareFile, type OutputFile } from '../platform/files';
+import { canShare, history, ledgerStore, previewUrl, saveFile, shareFile, type OutputFile } from '../platform/files';
 import { formatBytes } from '../core/history';
+import { loadLedger, milestoneReached, recordJob, saveLedger } from '../core/ledger';
 import { countUpValue } from '../core/feel';
 import { progressStep } from '../core/theme';
 import { celebrate } from './celebrate';
@@ -119,7 +120,7 @@ export class Runner {
 
   async run<T>(
     work: (ctx: { setCancel: (fn: () => void) => void; progress: (d: number, tot: number, label?: string) => void }) => Promise<T>,
-    done: (value: T) => { files: OutputFile[]; inputs: string[]; extra?: Node },
+    done: (value: T) => { files: OutputFile[]; inputs: string[]; extra?: Node; saved?: number },
     retry: () => void,
   ) {
     this.cancelled = false;
@@ -132,8 +133,13 @@ export class Runner {
         progress: (d, tot, label) => !this.cancelled && this.progress(d, tot, label),
       });
       if (this.cancelled) return;
-      const { files, inputs, extra } = done(value);
-      this.success(files, extra);
+      const { files, inputs, extra, saved } = done(value);
+      const before = loadLedger(ledgerStore);
+      const after = recordJob(before, files.length, saved);
+      saveLedger(ledgerStore, after);
+      const reached = milestoneReached(before.jobs, after.jobs);
+      const badge = reached ? h('p', { class: 'milestone', role: 'status' }, icon('shield', 18), t('ledger.milestone', { n: reached })) : null;
+      this.success(files, extra || badge ? h('div', {}, extra ?? null, badge) : undefined);
       for (const f of files) history.add({ tool: this.tool, inputs, output: f.name, outputSize: f.bytes.length, ok: true });
     } catch (e) {
       if (this.cancelled) return;
