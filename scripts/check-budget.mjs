@@ -12,6 +12,11 @@ for (const f of new Set(refs)) {
   total += kb;
   console.log(`${kb.toFixed(1).padStart(7)} KB  ${f}`);
 }
+for (const m of html.matchAll(/<style>([\s\S]*?)<\/style>/g)) {
+  const kb = gzipSync(m[1]).length / 1024;
+  total += kb;
+  console.log(`${kb.toFixed(1).padStart(7)} KB  inline <style>`);
+}
 console.log(`${total.toFixed(1).padStart(7)} KB  startup total (budget ${max} KB)`);
 if (total > max) {
   console.error(`Startup budget exceeded by ${(total - max).toFixed(1)} KB. Lazy-load the new code or raise the budget on purpose.`);
