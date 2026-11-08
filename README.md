@@ -1,8 +1,8 @@
 # Private PDF
 
 Privacy-first PDF tools for **Android (Google Play)** and **Web** from one codebase. Every tool runs on
-the device: nothing is uploaded, OCR (Nepali + English) works offline. Scope lives in
-[MASTER_PROMPT.md](MASTER_PROMPT.md); per-feature behaviour in [docs/FEATURES.md](docs/FEATURES.md).
+the device: nothing is uploaded, OCR (Nepali + English) works offline.
+Per-feature behaviour is documented in [docs/FEATURES.md](docs/FEATURES.md).
 
 ## Tools (v1.0)
 
